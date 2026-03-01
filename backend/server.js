@@ -11,13 +11,15 @@ const port = process.env.PORT || 5000;
 
 const mysql = require('mysql2');
 
-// Database connection parameters
+// Determine if we are in the development environment
+const isDev = process.env.NODE_ENV === 'development';
+
+// Conditionally select the database configuration
 const dbConfig = {
-  host: process.env.DB_URL,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  // Add database name here when you have it: 
-  // database: process.env.DB_NAME 
+  host: isDev ? process.env.DEV_DB_URL : process.env.DB_URL,
+  user: isDev ? process.env.DEV_DB_USER : process.env.DB_USER,
+  password: isDev ? process.env.DEV_DB_PASSWORD : process.env.DB_PASSWORD,
+  database: isDev ? process.env.DEV_DB_NAME : process.env.DB_NAME,
 };
 
 // Create a MySQL connection pool
@@ -95,8 +97,26 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Basic route
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to the Allies Connect API' });
+app.get('/', async (req, res) => {
+  try {
+    // Query the database to confirm connection
+    const [rows] = await pool.promise().query(
+      'SELECT * FROM User WHERE user_id = 1'
+    );
+
+    const email = rows[0]?.email || 'No email found';
+
+    res.json({
+      message: `Welcome to the Allies Connect API, ${email}`
+    });
+  } catch (error) {
+    console.error('Database query error:', error);
+    res.status(500).json({
+      message: 'Welcome to the Allies Connect API',
+      db_status: 'Error',
+      error: error.message
+    });
+  }
 });
 app.get('/users', (req, res) => {
   res.json([{ id: 1, name: 'Jane Doe', email: 'jane@email.com' }]);
