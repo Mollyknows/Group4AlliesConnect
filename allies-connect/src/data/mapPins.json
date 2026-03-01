@@ -1,0 +1,182 @@
+[
+    {
+        "id": 1,
+        "name": "Location 1",
+        "position": {
+            "lat": 33.7490,
+            "lng": -84.3880
+        },
+        "color": "yellow"
+    },
+    {
+        "id": 2,
+        "name": "Location 2",
+        "position": {
+            "lat": 33.7550,
+            "lng": -84.3900
+        },
+        "color": "green"
+    },
+    {
+        "id": 3,
+        "name": "Location 3",
+        "position": {
+            "lat": 33.7600,
+            "lng": -84.3800
+        },
+        "color": "blue"
+    },
+    {
+        "id": 4,
+        "name": "Location 4",
+        "position": {
+            "lat": 33.7400,
+            "lng": -84.3750
+        },
+        "color": "pink"
+    },
+    {
+        "id": 5,
+        "name": "Location 5",
+        "position": {
+            "lat": 33.7700,
+            "lng": -84.3950
+        },
+        "color": "yellow"
+    },
+    {
+        "id": 6,
+        "name": "Location 6",
+        "position": {
+            "lat": 33.7380,
+            "lng": -84.4000
+        },
+        "color": "green"
+    },
+    {
+        "id": 7,
+        "name": "Location 7",
+        "position": {
+            "lat": 33.7650,
+            "lng": -84.3700
+        },
+        "color": "blue"
+    },
+    {
+        "id": 8,
+        "name": "Location 8",
+        "position": {
+            "lat": 33.7450,
+            "lng": -84.3600
+        },
+        "color": "pink"
+    },
+    {
+        "id": 9,
+        "name": "Location 9",
+        "position": {
+            "lat": 33.7800,
+            "lng": -84.3800
+        },
+        "color": "yellow"
+    },
+    {
+        "id": 10,
+        "name": "Location 10",
+        "position": {
+            "lat": 33.7300,
+            "lng": -84.3900
+        },
+        "color": "green"
+    },
+    {
+        "id": 11,
+        "name": "Location 11",
+        "position": {
+            "lat": 33.7550,
+            "lng": -84.3500
+        },
+        "color": "blue"
+    },
+    {
+        "id": 12,
+        "name": "Location 12",
+        "position": {
+            "lat": 33.7600,
+            "lng": -84.4100
+        },
+        "color": "pink"
+    },
+    {
+        "id": 13,
+        "name": "Location 13",
+        "position": {
+            "lat": 33.7850,
+            "lng": -84.3950
+        },
+        "color": "yellow"
+    },
+    {
+        "id": 14,
+        "name": "Location 14",
+        "position": {
+            "lat": 33.7250,
+            "lng": -84.3850
+        },
+        "color": "green"
+    },
+    {
+        "id": 15,
+        "name": "Location 15",
+        "position": {
+            "lat": 33.7680,
+            "lng": -84.3600
+        },
+        "color": "blue"
+    },
+    {
+        "id": 16,
+        "name": "Location 16",
+        "position": {
+            "lat": 33.7420,
+            "lng": -84.4200
+        },
+        "color": "pink"
+    },
+    {
+        "id": 17,
+        "name": "Location 17",
+        "position": {
+            "lat": 33.7750,
+            "lng": -84.4050
+        },
+        "color": "yellow"
+    },
+    {
+        "id": 18,
+        "name": "Location 18",
+        "position": {
+            "lat": 33.7350,
+            "lng": -84.3700
+        },
+        "color": "green"
+    },
+    {
+        "id": 19,
+        "name": "Location 19",
+        "position": {
+            "lat": 33.7500,
+            "lng": -84.3550
+        },
+        "color": "blue"
+    },
+    {
+        "id": 20,
+        "name": "Location 20",
+        "position": {
+            "lat": 33.7650,
+            "lng": -84.4150
+        },
+        "color": "pink"
+    }
+]
