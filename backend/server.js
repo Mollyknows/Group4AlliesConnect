@@ -41,8 +41,7 @@ app.get('/', async (req, res) => {
   try {
     // Query the database to confirm connection
     const [rows] = await pool.promise().query(
-      'SELECT * FROM User WHERE user_id = 1 AND email = ?',
-      ['alice@example.com']
+      'SELECT * FROM User WHERE user_id = 1'
     );
 
     const email = rows[0]?.email || 'No email found';
