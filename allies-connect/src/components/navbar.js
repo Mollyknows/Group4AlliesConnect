@@ -1,6 +1,8 @@
 import { Navbar, Nav, Container, Button } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 
 function MyNavbar() {
+    const navigate = useNavigate();
     return (
         <Navbar className="navbar" expand="lg">
             <Container>
@@ -12,7 +14,7 @@ function MyNavbar() {
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="ms-auto">
                         <Button className="btn-outline-navbar btn-gold">Register</Button>
-                        <Button className="btn-outline-navbar btn-white">Login</Button>
+                        <Button className="btn-outline-navbar btn-white" onClick={() => navigate('/login')}>Login</Button>
                     </Nav>
                 </Navbar.Collapse>
             </Container>
