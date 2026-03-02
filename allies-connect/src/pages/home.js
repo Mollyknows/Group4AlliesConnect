@@ -1,8 +1,10 @@
 import { Container, Row, Col, Button } from "react-bootstrap";
 import { BsGeoAlt, BsCalendar, BsPerson } from "react-icons/bs";
+import { useNavigate } from 'react-router-dom';
 import '../App.css';
 
 function Home() {
+    const navigate = useNavigate();
     return (
         <Container className="home-container">
             <div className="text-container mb-5">
@@ -21,7 +23,7 @@ function Home() {
                         <BsCalendar className="feature-icon" />
                         <h3 className="text-center flex-grow-1">Browse Upcoming Events</h3>
                         <p className="text-center flex-grow-1">View a calendar of upcoming not-for-profit community events in your area.</p>
-                        <Button className="btn-gold">Events</Button>
+                        <Button className="btn-gold" onClick={() => navigate('/events')}>Events</Button>
                     </Col>
                     <Col md={4} className="mb-4 d-flex flex-column align-items-center">
                         <BsPerson className="feature-icon" />

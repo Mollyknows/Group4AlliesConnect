@@ -23,7 +23,7 @@
 }
 
 :root {
-  --gold: #C9A84C;
+  --gold: #c9a84c;
   --gold-dark: #b8963e;
 }
 
@@ -101,10 +101,20 @@
   padding: 60px 20px;
 }
 
+.event-container {
+  padding: 60px 20px;
+}
+
 .login-container {
   padding: 60px 20px;
 }
 
 .text-container {
   text-align: center;
+}
+
+.filter-label {
+  font-size: large;
+  font-weight: bold;
+  margin-right: 10px;
 }
