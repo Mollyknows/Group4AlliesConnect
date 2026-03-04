@@ -6,8 +6,8 @@ import MyNavbar from './components/navbar';
 import Events from "./pages/events";
 import Home from './pages/home';
 import Login from './pages/login';
-import Register from './pages/register';
 import Maps from "./pages/maps";
+import Register from './pages/register';
 
 function App() {
   return (
