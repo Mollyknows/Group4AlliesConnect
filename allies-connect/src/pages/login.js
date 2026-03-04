@@ -1,6 +1,5 @@
-import { Container, Row, Col, Button } from "react-bootstrap";
+import { Container, Row, Col, Button, Form } from "react-bootstrap";
 import '../App.css';
-import { Form } from 'react-bootstrap';
 
 function Login() {
     return (
@@ -9,23 +8,28 @@ function Login() {
                 <h1>Welcome Back!</h1>
             </div>
             <div className="feature-box">
-                <Row className="text-start mb-3">
-                    <Col md={3} className="d-flex flex-column">
-                        <h3>Username:</h3>
-                    </Col>
-                    <Col className="d-flex flex-column">
-                        <Form.Control type="text" placeholder="Enter username" />
-                    </Col>
-                </Row>
-                <Row className="text-start">
-                    <Col md={3} className="d-flex flex-column">
-                        <h3>Password:</h3>
-                    </Col>
-                    <Col className="d-flex flex-column">
-                        <Form.Control type="password" placeholder="Enter password" />
-                    </Col>
-                </Row>
-                <Row className="mt-4 justify-content-between">
+                <div className="text-container mb-5">
+                    <h2>Login</h2>
+                </div>
+                <Form className="mb-5">
+                    <Row className="text-start mb-3">
+                        <Col md={3} className="d-flex align-items-center">
+                            <h5>Username:</h5>
+                        </Col>
+                        <Col className="d-flex flex-column">
+                            <Form.Control type="text" placeholder="Enter username" />
+                        </Col>
+                    </Row>
+                    <Row className="text-start">
+                        <Col md={3} className="d-flex align-items-center">
+                            <h5>Password:</h5>
+                        </Col>
+                        <Col className="d-flex flex-column">
+                            <Form.Control type="password" placeholder="Enter password" />
+                        </Col>
+                    </Row>
+                </Form>
+                <Row className="justify-content-between">
                     <Col md={4}>
                         <Button variant="link">Forgot password?</Button>
                     </Col>
