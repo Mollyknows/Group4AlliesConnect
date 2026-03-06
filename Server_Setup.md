@@ -12,10 +12,10 @@
 ---
 
 ## Connecting to the Server
-1. Connecf to KSU VPN (GlobalProtect)
+1. Connect to KSU VPN (GlobalProtect)
 2. SSH into the server:
 
-ssh adminstrator@10.96.61.243
+ssh administrator@10.96.61.243
 
 ---
 
@@ -29,14 +29,14 @@ Do NOT run additional backend instances from home directories
 
 ---
 
-### Pulling Lastest Code After Merge
+### Pulling Latest Code After Merge
 
 After a PR is merged into main:
 
 cd /opt/allies-connect/Group4AlliesConnect
 git pull origin main
 cd backend
-nmp install
+npm install
 pm2 restart allies-backend
 
 ---
