@@ -36,6 +36,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// API Routes
+require('./api/events')(app, pool);
+require('./api/resources')(app, pool);
+require('./api/organizations')(app, pool);
+require('./api/volunteers')(app, pool);
+require('./api/auth')(app, pool);
+require('./api/admin')(app, pool);
+
 // Basic route
 app.get('/', async (req, res) => {
   try {
