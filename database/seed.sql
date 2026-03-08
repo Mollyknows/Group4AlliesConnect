@@ -1,3 +1,6 @@
+-- Assumes a fresh database created from schema.sql
+-- Intended for development and demo/testing only
+
 -- 1. Roles
 INSERT INTO Role (role_name) VALUES 
 ('user'), ('volunteer'), ('provider'), ('admin');
