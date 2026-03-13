@@ -122,3 +122,9 @@
   font-weight: bold;
   margin-right: 10px;
 }
+
+.navbar-username {
+  display: inline-flex;
+  align-items: center;
+  color: white !important;
+}
