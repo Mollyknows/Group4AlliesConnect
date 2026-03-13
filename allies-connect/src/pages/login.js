@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-function Login({ setUser }) {
+function Login({ setUser , setRole }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
@@ -18,19 +18,24 @@ function Login({ setUser }) {
                 email,
                 password
             });
+            console.log("Login successful:", response.data);
+
             if (!response.data.roles.includes(userRole)) {
                 throw new Error("User role does not match selected role");
             }
-            console.log("Login successful:", response.data);
 
             const profileResponse = await axios.get(`http://localhost:5000/api/users/profile/${response.data.user_id}`);
 
             setUser(profileResponse.data);
+            setRole(userRole);
+            localStorage.setItem("user", JSON.stringify(profileResponse.data));
+            localStorage.setItem("role", JSON.stringify(userRole));
+
             console.log("Login successful:", profileResponse.data);
             if (userRole === "volunteer") {
                 navigate("/volunteer");
-            } else if (userRole === "organization") {
-                navigate("/organization");
+            } else if (userRole === "provider") {
+                navigate("/provider");
             } else if (userRole === "admin") {
                 navigate("/admin");
             } else {
@@ -78,7 +83,7 @@ function Login({ setUser }) {
                             <Form.Select defaultValue="" onChange={(e) => setUserRole(e.target.value)}>
                                 <option value="" disabled>Select role</option>
                                 <option value="volunteer">Volunteer</option>
-                                <option value="organization">Organization</option>
+                                <option value="provider">Provider</option>
                                 <option value="admin">Admin</option>
                             </Form.Select>
                         </Col>
