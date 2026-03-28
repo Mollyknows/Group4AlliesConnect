@@ -1,48 +1,46 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Button, Table, Card } from 'react-bootstrap';
-import axios from 'axios';
+import React from 'react';
+import { Container, Row, Col, Button } from 'react-bootstrap';
 import '../App.css';
 
-function Provider({ providerId }) {
-  const [opportunities, setOpportunities] = useState([]);
+function Provider({ user }) {
+    const handleExport = () => {
+        // Utilizes the organization
+        window.open(`/api/organizations/signups/export/all`, '_blank');
+    };
 
-  useEffect(() => {
-    axios.get(`/api/volunteer-opportunities?provider_id=${providerId}`)
-      .then(res => setOpportunities(res.data));
-  }, [providerId]);
+    return (
+        <Container className="home-container">
+            <h1 className="mb-4">Organization Portal</h1>
 
-  const exportRoster = (shiftId) => {
-    window.open(`/api/organizations/signups/export/${shiftId}`, '_blank');
-  };
+            {/* Events Section */}
+            <section className="mb-5">
+                <h3 className="border-bottom pb-2">Events</h3>
+                <Row className="mt-3 g-2">
+                    <Col md="auto"><Button className="btn-gold px-5">Create Event</Button></Col>
+                    <Col md="auto"><Button variant="outline-warning" className="px-5 py-3">Edit Events</Button></Col>
+                </Row>
+            </section>
 
-  return (
-    <Container className="home-container">
-      <div className="text-container mb-4">
-        <h1>Provider Management</h1>
-        <p>Create opportunities and manage your volunteer rosters.</p>
-        <Button className="btn-gold w-auto px-4">Create New Opportunity</Button>
-      </div>
+            {/* Resources Section */}
+            <section className="mb-5">
+                <h3 className="border-bottom pb-2">Resources</h3>
+                <Row className="mt-3 g-2">
+                    <Col md="auto"><Button className="btn-gold px-4">Create Resources</Button></Col>
+                    <Col md="auto"><Button variant="outline-warning" className="px-4 py-3">Edit Resources</Button></Col>
+                    <Col md="auto"><Button variant="outline-warning" className="px-4 py-3">Volunteer Shift Management</Button></Col>
+                </Row>
+            </section>
 
-      <Row className="g-4">
-        {opportunities.map(opp => (
-          <Col md={6} key={opp.opportunity_id}>
-            <Card className="h-100 shadow-sm border-0" style={{borderLeft: '5px solid var(--gold)'}}>
-              <Card.Body>
-                <Card.Title>{opp.title}</Card.Title>
-                <Card.Text>Status: <strong>{opp.status}</strong></Card.Text>
-                <div className="d-flex gap-2">
-                  <Button variant="outline-dark" size="sm">Edit</Button>
-                  <Button variant="info" size="sm" onClick={() => exportRoster(opp.shift_id)}>
-                    Download Roster (CSV)
-                  </Button>
+            {/* Reporting Section */}
+            <section>
+                <h3 className="border-bottom pb-2">Reporting</h3>
+                <div className="mt-3" style={{maxWidth: '300px'}}>
+                    <Button className="btn-gold" onClick={handleExport}>
+                        Export Volunteer Signup Data
+                    </Button>
                 </div>
-              </Card.Body>
-            </Card>
-          </Col>
-        ))}
-      </Row>
-    </Container>
-  );
+            </section>
+        </Container>
+    );
 }
-
 export default Provider;
