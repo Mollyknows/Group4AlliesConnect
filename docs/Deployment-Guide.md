@@ -90,7 +90,7 @@ sudo npm install -g pm2
     Add the following to the `.env` file:
 
     ```
-    REACT_APP_MAP_API_KEY=AIzaSyBmmymMndf3ASeT6_m_8PFjuhLhLyoCxUM  
+    REACT_APP_MAP_API_KEY={{Google Maps API key}}  
     REACT_APP_API_URL=
     ```
 
