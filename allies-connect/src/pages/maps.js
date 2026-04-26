@@ -9,6 +9,7 @@ import {
 import axios from "axios";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Container, Form, Modal } from "react-bootstrap";
+import { Helmet } from "react-helmet";
 import "../App.css";
 import MapPinDetails from "../components/MapPinDetails";
 import { formatHours } from "../components/provider/providerHelpers";
@@ -756,533 +757,536 @@ function Maps() {
   }, []);
 
   return (
-    <Container
-      fluid
-      style={{ height: "calc(100vh - 80px)", padding: 0, position: "relative" }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          top: "10px",
-          left: "10px",
-          right: "10px",
-          zIndex: 1000,
-          display: "flex",
-          gap: "10px",
-          alignItems: "flex-start",
-          flexWrap: "wrap",
-          pointerEvents: "none",
-        }}
+    <>
+      <Helmet><title>Resources | Allies Connect</title></Helmet>
+      <Container
+        fluid
+        style={{ height: "calc(100vh - 80px)", padding: 0, position: "relative" }}
       >
-        {/* Filter Overlay UI */}
         <div
           style={{
-            position: "relative",
-            backgroundColor: "white",
-            padding: filtersExpanded
-              ? "clamp(10px, 3vw, 20px)"
-              : "clamp(6px, 2vw, 10px)",
-            borderRadius: "8px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-            pointerEvents: "auto",
-            width: filtersExpanded
-              ? "clamp(160px, 45vw, 260px)"
-              : "clamp(92px, 26vw, 125px)",
-            maxHeight: "calc(100vh - 120px)",
-            overflowY: "auto",
-            transition: "all 0.3s ease",
+            position: "absolute",
+            top: "10px",
+            left: "10px",
+            right: "10px",
+            zIndex: 1000,
+            display: "flex",
+            gap: "10px",
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+            pointerEvents: "none",
           }}
         >
-          {/* The filter panel */}
+          {/* Filter Overlay UI */}
           <div
-            className={`d-flex justify-content-between align-items-center ${
-              filtersExpanded ? "mb-2" : "mb-0"
-            }`}
+            style={{
+              position: "relative",
+              backgroundColor: "white",
+              padding: filtersExpanded
+                ? "clamp(10px, 3vw, 20px)"
+                : "clamp(6px, 2vw, 10px)",
+              borderRadius: "8px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              pointerEvents: "auto",
+              width: filtersExpanded
+                ? "clamp(160px, 45vw, 260px)"
+                : "clamp(92px, 26vw, 125px)",
+              maxHeight: "calc(100vh - 120px)",
+              overflowY: "auto",
+              transition: "all 0.3s ease",
+            }}
           >
-            <h5
-              className="mb-0"
-              style={{
-                color: "var(--gold)",
-                fontSize: "clamp(0.9rem, 3vw, 1.25rem)",
-              }}
+            {/* The filter panel */}
+            <div
+              className={`d-flex justify-content-between align-items-center ${
+                filtersExpanded ? "mb-2" : "mb-0"
+              }`}
             >
-              Filters
-            </h5>
-            <Button
-              variant="link"
-              size="sm"
-              onClick={() => setFiltersExpanded(!filtersExpanded)}
-              style={{ padding: 0, color: "#333", textDecoration: "none" }}
-            >
-              {filtersExpanded ? "▼" : "▶"}
-            </Button>
+              <h5
+                className="mb-0"
+                style={{
+                  color: "var(--gold)",
+                  fontSize: "clamp(0.9rem, 3vw, 1.25rem)",
+                }}
+              >
+                Filters
+              </h5>
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => setFiltersExpanded(!filtersExpanded)}
+                style={{ padding: 0, color: "#333", textDecoration: "none" }}
+              >
+                {filtersExpanded ? "▼" : "▶"}
+              </Button>
+            </div>
+
+            {/* The filter options */}
+            {filtersExpanded && (
+              <Form style={{ fontSize: "clamp(0.75rem, 2.5vw, 1rem)" }}>
+                {Object.entries(categoryColorMap).map(([name, color]) => {
+                  const emoji = CATEGORY_EMOJI[name];
+                  return (
+                    <div key={name} className="d-flex align-items-center mb-2">
+                      {emoji ? (
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: "clamp(16px, 4vw, 22px)",
+                            height: "clamp(16px, 4vw, 22px)",
+                            background: color,
+                            borderRadius: "50%",
+                            marginRight: "8px",
+                            fontSize: "clamp(10px, 2.5vw, 14px)",
+                            lineHeight: 1,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {emoji}
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            display: "inline-block",
+                            width: "clamp(10px, 3vw, 14px)",
+                            height: "clamp(10px, 3vw, 14px)",
+                            backgroundColor: color,
+                            borderRadius: "50%",
+                            marginRight: "10px",
+                            flexShrink: 0,
+                          }}
+                        />
+                      )}
+                      <Form.Check
+                        type="checkbox"
+                        label={name}
+                        checked={filters[name] !== false}
+                        onChange={() => handleFilterChange(name)}
+                        id={`filter-${name}`}
+                        className="mb-0"
+                      />
+                    </div>
+                  );
+                })}
+                <div className="mt-3 pt-2 border-top">
+                  <Form.Label
+                    className="mb-2"
+                    style={{
+                      fontWeight: 600,
+                      fontSize: "clamp(0.75rem, 2.5vw, 1rem)",
+                    }}
+                  >
+                    Location Filter
+                  </Form.Label>
+
+                  <Form.Check
+                    type="radio"
+                    id="location-filter-distance"
+                    name="location-filter-mode"
+                    label="Distance"
+                    checked={locationFilterMode === "distance"}
+                    onChange={() => setLocationFilterMode("distance")}
+                    className="mb-1"
+                  />
+                  <Form.Check
+                    type="radio"
+                    id="location-filter-county"
+                    name="location-filter-mode"
+                    label="County (Georgia)"
+                    checked={locationFilterMode === "county"}
+                    onChange={() => setLocationFilterMode("county")}
+                    className="mb-2"
+                  />
+
+                  {locationFilterMode === "distance" ? (
+                    <>
+                      <div className="d-flex align-items-center mt-2">
+                        <Form.Label
+                          className="mb-0 me-2"
+                          style={{
+                            fontWeight: 500,
+                            fontSize: "clamp(0.75rem, 2.5vw, 1rem)",
+                          }}
+                        >
+                          Distance
+                        </Form.Label>
+                        <Form.Control
+                          type="number"
+                          step="any"
+                          min="1"
+                          style={{
+                            width: "clamp(55px, 15vw, 80px)",
+                            padding: "0.25rem 0.5rem",
+                            fontSize: "clamp(0.75rem, 2.5vw, 1rem)",
+                          }}
+                          className="me-2 text-center"
+                          value={distanceInputVal}
+                          onChange={handleDistanceChange}
+                          ref={distanceInputRef}
+                          isInvalid={!!distanceErrorMsg}
+                          onClick={() => {
+                            if (!userLocation) {
+                              setShowAddressModal(true);
+                            }
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontWeight: 500,
+                            fontSize: "clamp(0.75rem, 2.5vw, 1rem)",
+                          }}
+                        >
+                          miles
+                        </span>
+                      </div>
+
+                      {distanceErrorMsg && (
+                        <div
+                          className="text-danger mt-1"
+                          style={{ fontSize: "0.85rem" }}
+                        >
+                          {distanceErrorMsg}
+                        </div>
+                      )}
+
+                      {!gpsActive && (
+                        <div className="mt-3">
+                          <Button
+                            variant="outline-secondary"
+                            size="sm"
+                            className="w-100"
+                            onClick={() => setShowAddressModal(true)}
+                          >
+                            Set my location
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <Form.Select
+                        className="mt-2"
+                        size="sm"
+                        value={selectedCountyName}
+                        onChange={(e) => setSelectedCountyName(e.target.value)}
+                      >
+                        <option value="">Select a county</option>
+                        {countyNameOptions.map((countyName) => (
+                          <option key={countyName} value={countyName}>
+                            {countyName}
+                          </option>
+                        ))}
+                      </Form.Select>
+                      <small className="text-muted d-block mt-1">
+                        Distance is ignored while county filtering is active.
+                      </small>
+                    </>
+                  )}
+                </div>
+              </Form>
+            )}
           </div>
 
-          {/* The filter options */}
-          {filtersExpanded && (
-            <Form style={{ fontSize: "clamp(0.75rem, 2.5vw, 1rem)" }}>
-              {Object.entries(categoryColorMap).map(([name, color]) => {
-                const emoji = CATEGORY_EMOJI[name];
-                return (
-                  <div key={name} className="d-flex align-items-center mb-2">
-                    {emoji ? (
-                      <span
+          <div
+            ref={searchContainerRef}
+            style={{
+              position: "relative",
+              backgroundColor: "white",
+              borderRadius: "8px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              padding: "6px 8px",
+              width: "min(320px, calc(100vw - 40px))",
+              minHeight: "44px",
+              display: "flex",
+              alignItems: "center",
+              pointerEvents: "auto",
+            }}
+          >
+            <Form.Control
+              type="text"
+              placeholder="Search resources or events"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowSearchDropdown(true);
+              }}
+              onFocus={() => setShowSearchDropdown(true)}
+              onKeyDown={handleSearchKeyDown}
+              autoComplete="off"
+              size="sm"
+              style={{ minHeight: "30px", fontSize: "0.9rem" }}
+            />
+            {showSearchDropdown && searchQuery.trim() && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 6px)",
+                  left: 0,
+                  right: 0,
+                  marginTop: "8px",
+                  border: "1px solid #ddd",
+                  borderRadius: "6px",
+                  maxHeight: "240px",
+                  overflowY: "auto",
+                  backgroundColor: "#fff",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
+                }}
+              >
+                {searchMatches.length > 0 ? (
+                  searchMatches.map((pin) => (
+                    <button
+                      key={`search-${pin.id}`}
+                      type="button"
+                      onClick={() => handleSearchSelect(pin)}
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        textAlign: "left",
+                        padding: "8px 10px",
+                        border: "none",
+                        borderBottom: "1px solid #eee",
+                        background: "transparent",
+                        fontSize: "0.95rem",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {pin.searchLabel}
+                    </button>
+                  ))
+                ) : (
+                  <div
+                    style={{
+                      padding: "10px",
+                      color: "#666",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    No matching resources or events found.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Address Prompt Modal */}
+        <Modal
+          show={showAddressModal}
+          onHide={() => {
+            setShowAddressModal(false);
+            if (!userLocation && distanceInputRef.current) {
+              distanceInputRef.current.blur();
+            }
+          }}
+          centered
+        >
+          <Modal.Header closeButton>
+            <Modal.Title style={{ color: "var(--gold)" }}>
+              Your Location
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <p
+              className="text-muted"
+              style={{ fontSize: "0.9rem", fontWeight: 500 }}
+            >
+              For safety, enter an address near your location rather than where
+              you live.
+            </p>
+            <Form onSubmit={handleAddressSubmit}>
+              <Form.Group>
+                <Form.Label>
+                  Please provide an address, zip code, or city:
+                </Form.Label>
+                <Form.Control
+                  ref={addressInputRef}
+                  type="text"
+                  placeholder="e.g. 123 Main St, Atlanta, GA"
+                  value={addressInput}
+                  onChange={(e) => setAddressInput(e.target.value)}
+                  isInvalid={!!addressError}
+                  autoFocus
+                  autoComplete="off"
+                />
+                <Form.Control.Feedback type="invalid">
+                  {addressError}
+                </Form.Control.Feedback>
+                <small className="text-muted">
+                  Start typing for suggestions, or enter any address and press
+                  Center Map.
+                </small>
+              </Form.Group>
+            </Form>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowAddressModal(false);
+                if (!userLocation && distanceInputRef.current) {
+                  distanceInputRef.current.blur();
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleAddressSubmit}
+              style={{
+                backgroundColor: "var(--gold)",
+                borderColor: "var(--gold)",
+                color: "black",
+                fontWeight: 500,
+              }}
+            >
+              Center Map
+            </Button>
+          </Modal.Footer>
+        </Modal>
+
+        <APIProvider apiKey={API_KEY}>
+          <MapUpdater userLocation={userLocation} />
+          <MapPinFocusController
+            focusTarget={focusTarget}
+            onFocusComplete={handleFocusComplete}
+          />
+          <Map
+            defaultCenter={DEFAULT_CENTER}
+            defaultZoom={10}
+            gestureHandling={"greedy"}
+            mapTypeControl={false}
+            fullscreenControl={false}
+            mapId={process.env.REACT_APP_MAP_ID || "DEMO_MAP_ID"}
+          >
+            <CountyBoundaryOverlay countyFeature={selectedCountyFeature} />
+
+            {/* The pins to display */}
+            {filteredPins.map((pin) => {
+              const emoji = CATEGORY_EMOJI[pin.category];
+              return (
+                <AdvancedMarker
+                  key={pin.id}
+                  position={pin.position}
+                  title={pin.name}
+                  onClick={() => setSelectedPin(pin)}
+                >
+                  {emoji ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <div
                         style={{
-                          display: "inline-flex",
+                          background: pin.color,
+                          borderRadius: "50%",
+                          width: "34px",
+                          height: "34px",
+                          display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          width: "clamp(16px, 4vw, 22px)",
-                          height: "clamp(16px, 4vw, 22px)",
-                          background: color,
-                          borderRadius: "50%",
-                          marginRight: "8px",
-                          fontSize: "clamp(10px, 2.5vw, 14px)",
+                          border: "2px solid white",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.35)",
+                          fontSize: "18px",
                           lineHeight: 1,
-                          flexShrink: 0,
+                          userSelect: "none",
                         }}
                       >
                         {emoji}
-                      </span>
-                    ) : (
-                      <span
-                        style={{
-                          display: "inline-block",
-                          width: "clamp(10px, 3vw, 14px)",
-                          height: "clamp(10px, 3vw, 14px)",
-                          backgroundColor: color,
-                          borderRadius: "50%",
-                          marginRight: "10px",
-                          flexShrink: 0,
-                        }}
-                      />
-                    )}
-                    <Form.Check
-                      type="checkbox"
-                      label={name}
-                      checked={filters[name] !== false}
-                      onChange={() => handleFilterChange(name)}
-                      id={`filter-${name}`}
-                      className="mb-0"
-                    />
-                  </div>
-                );
-              })}
-              <div className="mt-3 pt-2 border-top">
-                <Form.Label
-                  className="mb-2"
-                  style={{
-                    fontWeight: 600,
-                    fontSize: "clamp(0.75rem, 2.5vw, 1rem)",
-                  }}
-                >
-                  Location Filter
-                </Form.Label>
-
-                <Form.Check
-                  type="radio"
-                  id="location-filter-distance"
-                  name="location-filter-mode"
-                  label="Distance"
-                  checked={locationFilterMode === "distance"}
-                  onChange={() => setLocationFilterMode("distance")}
-                  className="mb-1"
-                />
-                <Form.Check
-                  type="radio"
-                  id="location-filter-county"
-                  name="location-filter-mode"
-                  label="County (Georgia)"
-                  checked={locationFilterMode === "county"}
-                  onChange={() => setLocationFilterMode("county")}
-                  className="mb-2"
-                />
-
-                {locationFilterMode === "distance" ? (
-                  <>
-                    <div className="d-flex align-items-center mt-2">
-                      <Form.Label
-                        className="mb-0 me-2"
-                        style={{
-                          fontWeight: 500,
-                          fontSize: "clamp(0.75rem, 2.5vw, 1rem)",
-                        }}
-                      >
-                        Distance
-                      </Form.Label>
-                      <Form.Control
-                        type="number"
-                        step="any"
-                        min="1"
-                        style={{
-                          width: "clamp(55px, 15vw, 80px)",
-                          padding: "0.25rem 0.5rem",
-                          fontSize: "clamp(0.75rem, 2.5vw, 1rem)",
-                        }}
-                        className="me-2 text-center"
-                        value={distanceInputVal}
-                        onChange={handleDistanceChange}
-                        ref={distanceInputRef}
-                        isInvalid={!!distanceErrorMsg}
-                        onClick={() => {
-                          if (!userLocation) {
-                            setShowAddressModal(true);
-                          }
-                        }}
-                      />
-                      <span
-                        style={{
-                          fontWeight: 500,
-                          fontSize: "clamp(0.75rem, 2.5vw, 1rem)",
-                        }}
-                      >
-                        miles
-                      </span>
-                    </div>
-
-                    {distanceErrorMsg && (
+                      </div>
                       <div
-                        className="text-danger mt-1"
-                        style={{ fontSize: "0.85rem" }}
-                      >
-                        {distanceErrorMsg}
-                      </div>
-                    )}
+                        style={{
+                          width: 0,
+                          height: 0,
+                          borderLeft: "5px solid transparent",
+                          borderRight: "5px solid transparent",
+                          borderTop: `7px solid ${pin.color}`,
+                          marginTop: "-1px",
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <Pin
+                      background={pin.color}
+                      borderColor={"#333"}
+                      glyphColor={"#333"}
+                    />
+                  )}
+                </AdvancedMarker>
+              );
+            })}
 
-                    {!gpsActive && (
-                      <div className="mt-3">
-                        <Button
-                          variant="outline-secondary"
-                          size="sm"
-                          className="w-100"
-                          onClick={() => setShowAddressModal(true)}
-                        >
-                          Set my location
-                        </Button>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <Form.Select
-                      className="mt-2"
-                      size="sm"
-                      value={selectedCountyName}
-                      onChange={(e) => setSelectedCountyName(e.target.value)}
-                    >
-                      <option value="">Select a county</option>
-                      {countyNameOptions.map((countyName) => (
-                        <option key={countyName} value={countyName}>
-                          {countyName}
-                        </option>
-                      ))}
-                    </Form.Select>
-                    <small className="text-muted d-block mt-1">
-                      Distance is ignored while county filtering is active.
-                    </small>
-                  </>
-                )}
-              </div>
-            </Form>
-          )}
-        </div>
-
-        <div
-          ref={searchContainerRef}
-          style={{
-            position: "relative",
-            backgroundColor: "white",
-            borderRadius: "8px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-            padding: "6px 8px",
-            width: "min(320px, calc(100vw - 40px))",
-            minHeight: "44px",
-            display: "flex",
-            alignItems: "center",
-            pointerEvents: "auto",
-          }}
-        >
-          <Form.Control
-            type="text"
-            placeholder="Search resources or events"
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setShowSearchDropdown(true);
-            }}
-            onFocus={() => setShowSearchDropdown(true)}
-            onKeyDown={handleSearchKeyDown}
-            autoComplete="off"
-            size="sm"
-            style={{ minHeight: "30px", fontSize: "0.9rem" }}
-          />
-          {showSearchDropdown && searchQuery.trim() && (
-            <div
-              style={{
-                position: "absolute",
-                top: "calc(100% + 6px)",
-                left: 0,
-                right: 0,
-                marginTop: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "6px",
-                maxHeight: "240px",
-                overflowY: "auto",
-                backgroundColor: "#fff",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
-              }}
-            >
-              {searchMatches.length > 0 ? (
-                searchMatches.map((pin) => (
-                  <button
-                    key={`search-${pin.id}`}
-                    type="button"
-                    onClick={() => handleSearchSelect(pin)}
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "8px 10px",
-                      border: "none",
-                      borderBottom: "1px solid #eee",
-                      background: "transparent",
-                      fontSize: "0.95rem",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {pin.searchLabel}
-                  </button>
-                ))
-              ) : (
+            {/* User location marker */}
+            {userLocation && (
+              <AdvancedMarker
+                position={userLocation}
+                title="My current location!"
+              >
                 <div
                   style={{
-                    padding: "10px",
-                    color: "#666",
-                    fontSize: "0.9rem",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
                   }}
                 >
-                  No matching resources or events found.
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Address Prompt Modal */}
-      <Modal
-        show={showAddressModal}
-        onHide={() => {
-          setShowAddressModal(false);
-          if (!userLocation && distanceInputRef.current) {
-            distanceInputRef.current.blur();
-          }
-        }}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title style={{ color: "var(--gold)" }}>
-            Your Location
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p
-            className="text-muted"
-            style={{ fontSize: "0.9rem", fontWeight: 500 }}
-          >
-            For safety, enter an address near your location rather than where
-            you live.
-          </p>
-          <Form onSubmit={handleAddressSubmit}>
-            <Form.Group>
-              <Form.Label>
-                Please provide an address, zip code, or city:
-              </Form.Label>
-              <Form.Control
-                ref={addressInputRef}
-                type="text"
-                placeholder="e.g. 123 Main St, Atlanta, GA"
-                value={addressInput}
-                onChange={(e) => setAddressInput(e.target.value)}
-                isInvalid={!!addressError}
-                autoFocus
-                autoComplete="off"
-              />
-              <Form.Control.Feedback type="invalid">
-                {addressError}
-              </Form.Control.Feedback>
-              <small className="text-muted">
-                Start typing for suggestions, or enter any address and press
-                Center Map.
-              </small>
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setShowAddressModal(false);
-              if (!userLocation && distanceInputRef.current) {
-                distanceInputRef.current.blur();
-              }
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleAddressSubmit}
-            style={{
-              backgroundColor: "var(--gold)",
-              borderColor: "var(--gold)",
-              color: "black",
-              fontWeight: 500,
-            }}
-          >
-            Center Map
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      <APIProvider apiKey={API_KEY}>
-        <MapUpdater userLocation={userLocation} />
-        <MapPinFocusController
-          focusTarget={focusTarget}
-          onFocusComplete={handleFocusComplete}
-        />
-        <Map
-          defaultCenter={DEFAULT_CENTER}
-          defaultZoom={10}
-          gestureHandling={"greedy"}
-          mapTypeControl={false}
-          fullscreenControl={false}
-          mapId={process.env.REACT_APP_MAP_ID || "DEMO_MAP_ID"}
-        >
-          <CountyBoundaryOverlay countyFeature={selectedCountyFeature} />
-
-          {/* The pins to display */}
-          {filteredPins.map((pin) => {
-            const emoji = CATEGORY_EMOJI[pin.category];
-            return (
-              <AdvancedMarker
-                key={pin.id}
-                position={pin.position}
-                title={pin.name}
-                onClick={() => setSelectedPin(pin)}
-              >
-                {emoji ? (
+                  {/* Person icon */}
                   <div
                     style={{
+                      background: "#1d4ed8",
+                      borderRadius: "50%",
+                      width: "32px",
+                      height: "32px",
                       display: "flex",
-                      flexDirection: "column",
                       alignItems: "center",
-                      cursor: "pointer",
+                      justifyContent: "center",
+                      border: "2px solid white",
+                      boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+                      fontSize: "18px",
+                      lineHeight: 1,
+                      userSelect: "none",
                     }}
+                    title="Your location"
                   >
-                    <div
-                      style={{
-                        background: pin.color,
-                        borderRadius: "50%",
-                        width: "34px",
-                        height: "34px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        border: "2px solid white",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.35)",
-                        fontSize: "18px",
-                        lineHeight: 1,
-                        userSelect: "none",
-                      }}
-                    >
-                      {emoji}
-                    </div>
-                    <div
-                      style={{
-                        width: 0,
-                        height: 0,
-                        borderLeft: "5px solid transparent",
-                        borderRight: "5px solid transparent",
-                        borderTop: `7px solid ${pin.color}`,
-                        marginTop: "-1px",
-                      }}
-                    />
+                    🧍
                   </div>
-                ) : (
-                  <Pin
-                    background={pin.color}
-                    borderColor={"#333"}
-                    glyphColor={"#333"}
+                  {/* Pointer stem */}
+                  <div
+                    style={{
+                      width: 0,
+                      height: 0,
+                      borderLeft: "5px solid transparent",
+                      borderRight: "5px solid transparent",
+                      borderTop: "7px solid #1d4ed8",
+                      marginTop: "-1px",
+                    }}
                   />
-                )}
-              </AdvancedMarker>
-            );
-          })}
-
-          {/* User location marker */}
-          {userLocation && (
-            <AdvancedMarker
-              position={userLocation}
-              title="My current location!"
-            >
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-              >
-                {/* Person icon */}
-                <div
-                  style={{
-                    background: "#1d4ed8",
-                    borderRadius: "50%",
-                    width: "32px",
-                    height: "32px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    border: "2px solid white",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
-                    fontSize: "18px",
-                    lineHeight: 1,
-                    userSelect: "none",
-                  }}
-                  title="Your location"
-                >
-                  🧍
                 </div>
-                {/* Pointer stem */}
-                <div
-                  style={{
-                    width: 0,
-                    height: 0,
-                    borderLeft: "5px solid transparent",
-                    borderRight: "5px solid transparent",
-                    borderTop: "7px solid #1d4ed8",
-                    marginTop: "-1px",
-                  }}
-                />
-              </div>
-            </AdvancedMarker>
-          )}
+              </AdvancedMarker>
+            )}
 
-          {/* The info window to display when a pin is selected */}
-          {selectedPin && (
-            <InfoWindow
-              position={selectedPin.position}
-              onCloseClick={() => {
-                setSelectedPin(null);
-                setFocusTarget(null);
-              }}
-              style={{ padding: 0 }}
-            >
-              <MapPinDetails details={selectedPin} />
-            </InfoWindow>
-          )}
-        </Map>
-      </APIProvider>
-    </Container>
+            {/* The info window to display when a pin is selected */}
+            {selectedPin && (
+              <InfoWindow
+                position={selectedPin.position}
+                onCloseClick={() => {
+                  setSelectedPin(null);
+                  setFocusTarget(null);
+                }}
+                style={{ padding: 0 }}
+              >
+                <MapPinDetails details={selectedPin} />
+              </InfoWindow>
+            )}
+          </Map>
+        </APIProvider>
+      </Container>
+    </>
   );
 }
 

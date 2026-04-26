@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import { Button, Col, Container, Form, Row } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet";
 import "../App.css";
 import { API_URL } from "../config";
 
@@ -52,75 +53,78 @@ function Login({ setUser, setRole }) {
   };
 
   return (
-    <Container className="login-container">
-      <div className="text-container mb-5">
-        <h1>Welcome Back!</h1>
-      </div>
-      <div className="feature-box">
+    <>
+      <Helmet><title>Login | Allies Connect</title></Helmet>
+      <Container className="login-container">
         <div className="text-container mb-5">
-          <h2>Login</h2>
-          {error && <p className="text-danger">{error}</p>}
+          <h1>Welcome Back!</h1>
         </div>
-        <Form className="mb-5">
-          <Row className="text-start mb-3">
-            <Col md={3} className="d-flex align-items-center">
-              <h5>Username:</h5>
+        <div className="feature-box">
+          <div className="text-container mb-5">
+            <h2>Login</h2>
+            {error && <p className="text-danger">{error}</p>}
+          </div>
+          <Form className="mb-5">
+            <Row className="text-start mb-3">
+              <Col md={3} className="d-flex align-items-center">
+                <h5>Username:</h5>
+              </Col>
+              <Col className="d-flex flex-column">
+                <Form.Control
+                  name="username"
+                  value={username}
+                  type="text"
+                  placeholder="Enter username"
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              </Col>
+            </Row>
+            <Row className="text-start mb-3 ">
+              <Col md={3} className="d-flex align-items-center">
+                <h5>Password:</h5>
+              </Col>
+              <Col className="d-flex flex-column">
+                <Form.Control
+                  name="password"
+                  value={password}
+                  type="password"
+                  placeholder="Enter password"
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </Col>
+            </Row>
+            <Row className="text-start">
+              <Col md={3} className="d-flex align-items-center">
+                <h5>Role:</h5>
+              </Col>
+              <Col className="d-flex flex-column">
+                <Form.Select
+                  defaultValue=""
+                  onChange={(e) => setUserRole(e.target.value)}
+                >
+                  <option value="" disabled>
+                    Select role
+                  </option>
+                  <option value="volunteer">Volunteer</option>
+                  <option value="provider">Provider</option>
+                  <option value="admin">Admin</option>
+                </Form.Select>
+              </Col>
+            </Row>
+          </Form>
+          <Row className="justify-content-between">
+            <Col md={4}>
+              <Link to="/forgot-password">Forgot password?</Link>
             </Col>
-            <Col className="d-flex flex-column">
-              <Form.Control
-                name="username"
-                value={username}
-                type="text"
-                placeholder="Enter username"
-                onChange={(e) => setUsername(e.target.value)}
-              />
+            <Col md={3}>
+              <Button className="btn-gold" onClick={handleLogin}>
+                Login
+              </Button>
             </Col>
           </Row>
-          <Row className="text-start mb-3 ">
-            <Col md={3} className="d-flex align-items-center">
-              <h5>Password:</h5>
-            </Col>
-            <Col className="d-flex flex-column">
-              <Form.Control
-                name="password"
-                value={password}
-                type="password"
-                placeholder="Enter password"
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </Col>
-          </Row>
-          <Row className="text-start">
-            <Col md={3} className="d-flex align-items-center">
-              <h5>Role:</h5>
-            </Col>
-            <Col className="d-flex flex-column">
-              <Form.Select
-                defaultValue=""
-                onChange={(e) => setUserRole(e.target.value)}
-              >
-                <option value="" disabled>
-                  Select role
-                </option>
-                <option value="volunteer">Volunteer</option>
-                <option value="provider">Provider</option>
-                <option value="admin">Admin</option>
-              </Form.Select>
-            </Col>
-          </Row>
-        </Form>
-        <Row className="justify-content-between">
-          <Col md={4}>
-            <Link to="/forgot-password">Forgot password?</Link>
-          </Col>
-          <Col md={3}>
-            <Button className="btn-gold" onClick={handleLogin}>
-              Login
-            </Button>
-          </Col>
-        </Row>
-      </div>
-    </Container>
+        </div>
+      </Container>
+    </>
   );
 }
 

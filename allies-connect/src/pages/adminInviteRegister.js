@@ -8,6 +8,7 @@ import {
   Row,
   Spinner,
 } from "react-bootstrap";
+import { Helmet } from "react-helmet";
 import { useNavigate, useParams } from "react-router-dom";
 import "../App.css";
 import { API_URL } from "../config";
@@ -189,226 +190,229 @@ function AdminInviteRegister() {
   }
 
   return (
-    <Container className="register-container">
-      <div className="text-container mb-3">
-        <h1>Welcome to Allies Connect</h1>
-      </div>
-      <div className="text-container mb-5">
-        <h2>Admin Account Invitation</h2>
-        <p>
-          You&apos;ve been invited to create an admin account. Fill out the form
-          below to continue.
-        </p>
-      </div>
-
-      <div className="feature-box">
-        <div className="text-container mb-4">
-          <h3>Create Your Admin Account</h3>
+    <>
+      <Helmet><title>Register | Allies Connect</title></Helmet>
+      <Container className="register-container">
+        <div className="text-container mb-3">
+          <h1>Welcome to Allies Connect</h1>
         </div>
-        <Form>
-          <Row className="text-start mb-3">
-            <Col md={3} className="d-flex align-items-center">
-              <h5>
-                Username: <span className="text-danger">*</span>
-              </h5>
-            </Col>
-            <Col className="d-flex align-items-center">
-              <Form.Group className="w-100">
-                <Form.Control
-                  name="username"
-                  type="text"
-                  placeholder="Enter username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  required
-                  isInvalid={
-                    formData.username &&
-                    !isValidUsernameFormat(formData.username)
-                  }
-                />
-                <Form.Control.Feedback type="invalid">
-                  Username must be 3-50 characters and contain only letters,
-                  numbers, underscores, and hyphens (no spaces)
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-          </Row>
+        <div className="text-container mb-5">
+          <h2>Admin Account Invitation</h2>
+          <p>
+            You&apos;ve been invited to create an admin account. Fill out the form
+            below to continue.
+          </p>
+        </div>
 
-          <Row className="text-start mb-3">
-            <Col md={3} className="d-flex align-items-center">
-              <h5>
-                Password: <span className="text-danger">*</span>
-              </h5>
-            </Col>
-            <Col className="d-flex align-items-center">
-              <Form.Group className="w-100">
-                <Form.Control
-                  name="password"
-                  type="password"
-                  placeholder="Enter password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  isInvalid={
-                    formData.password &&
-                    !isValidPasswordFormat(formData.password)
-                  }
-                />
-                <Form.Control.Feedback type="invalid">
-                  {getPasswordErrors(formData.password).map((err, i) => (
-                    <div key={i}>{err}</div>
-                  ))}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-          </Row>
-
-          <Row className="text-start mb-3">
-            <Col md={3} className="d-flex align-items-center">
-              <h5>
-                Confirm Password: <span className="text-danger">*</span>
-              </h5>
-            </Col>
-            <Col className="d-flex align-items-center">
-              <Form.Group className="w-100">
-                <Form.Control
-                  name="confirmPassword"
-                  type="password"
-                  placeholder="Enter password again"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  required
-                  isInvalid={
-                    formData.confirmPassword &&
-                    formData.password !== formData.confirmPassword
-                  }
-                />
-                <Form.Control.Feedback type="invalid">
-                  Passwords do not match
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-          </Row>
-
-          <Row className="text-start mb-3">
-            <Col md={3} className="d-flex align-items-center">
-              <h5>
-                Email: <span className="text-danger">*</span>
-              </h5>
-            </Col>
-            <Col className="d-flex align-items-center">
-              <Form.Group className="w-100">
-                <Form.Control
-                  name="email"
-                  type="email"
-                  placeholder="Enter email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  isInvalid={
-                    formData.email && !isValidEmailFormat(formData.email)
-                  }
-                />
-                <Form.Control.Feedback type="invalid">
-                  Email must be in a valid format (e.g., user@example.com)
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-          </Row>
-
-          <Row className="text-start mb-3">
-            <Col md={3} className="d-flex align-items-center">
-              <h5>
-                First Name: <span className="text-danger">*</span>
-              </h5>
-            </Col>
-            <Col className="d-flex align-items-center">
-              <Form.Control
-                name="firstName"
-                type="text"
-                placeholder="Enter first name"
-                value={formData.firstName}
-                onChange={handleChange}
-                required
-              />
-            </Col>
-          </Row>
-
-          <Row className="text-start mb-3">
-            <Col md={3} className="d-flex align-items-center">
-              <h5>
-                Last Name: <span className="text-danger">*</span>
-              </h5>
-            </Col>
-            <Col className="d-flex align-items-center">
-              <Form.Control
-                name="lastName"
-                type="text"
-                placeholder="Enter last name"
-                value={formData.lastName}
-                onChange={handleChange}
-                required
-              />
-            </Col>
-          </Row>
-
-          <Row className="text-start mb-3">
-            <Col md={3} className="d-flex align-items-center">
-              <h5>
-                Phone Number: <span className="text-danger">*</span>
-              </h5>
-            </Col>
-            <Col className="d-flex align-items-center">
-              <Form.Group className="w-100">
-                <Form.Control
-                  name="phone"
-                  type="text"
-                  placeholder="(###) ###-####"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                  isInvalid={
-                    formData.phone && !isValidPhoneFormat(formData.phone)
-                  }
-                />
-                <Form.Control.Feedback type="invalid">
-                  Phone number must be a valid 10-digit format
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-          </Row>
-
-          <Row className="text-start mb-4">
-            <Col md={3} className="d-flex align-items-center">
-              <h5>
-                ZIP Code: <span className="text-danger">*</span>
-              </h5>
-            </Col>
-            <Col className="d-flex align-items-center">
-              <Form.Control
-                name="zip"
-                type="text"
-                placeholder="Enter ZIP code"
-                value={formData.zip}
-                onChange={handleChange}
-                required
-              />
-            </Col>
-          </Row>
-
-          <div className="text-center mt-4">
-            <Button
-              variant="primary"
-              className="btn-green"
-              disabled={!isFormValid}
-              onClick={handleRegister}
-            >
-              Create Admin Account
-            </Button>
+        <div className="feature-box">
+          <div className="text-container mb-4">
+            <h3>Create Your Admin Account</h3>
           </div>
-        </Form>
-      </div>
-    </Container>
+          <Form>
+            <Row className="text-start mb-3">
+              <Col md={3} className="d-flex align-items-center">
+                <h5>
+                  Username: <span className="text-danger">*</span>
+                </h5>
+              </Col>
+              <Col className="d-flex align-items-center">
+                <Form.Group className="w-100">
+                  <Form.Control
+                    name="username"
+                    type="text"
+                    placeholder="Enter username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    required
+                    isInvalid={
+                      formData.username &&
+                      !isValidUsernameFormat(formData.username)
+                    }
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    Username must be 3-50 characters and contain only letters,
+                    numbers, underscores, and hyphens (no spaces)
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Row className="text-start mb-3">
+              <Col md={3} className="d-flex align-items-center">
+                <h5>
+                  Password: <span className="text-danger">*</span>
+                </h5>
+              </Col>
+              <Col className="d-flex align-items-center">
+                <Form.Group className="w-100">
+                  <Form.Control
+                    name="password"
+                    type="password"
+                    placeholder="Enter password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    isInvalid={
+                      formData.password &&
+                      !isValidPasswordFormat(formData.password)
+                    }
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {getPasswordErrors(formData.password).map((err, i) => (
+                      <div key={i}>{err}</div>
+                    ))}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Row className="text-start mb-3">
+              <Col md={3} className="d-flex align-items-center">
+                <h5>
+                  Confirm Password: <span className="text-danger">*</span>
+                </h5>
+              </Col>
+              <Col className="d-flex align-items-center">
+                <Form.Group className="w-100">
+                  <Form.Control
+                    name="confirmPassword"
+                    type="password"
+                    placeholder="Enter password again"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    required
+                    isInvalid={
+                      formData.confirmPassword &&
+                      formData.password !== formData.confirmPassword
+                    }
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    Passwords do not match
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Row className="text-start mb-3">
+              <Col md={3} className="d-flex align-items-center">
+                <h5>
+                  Email: <span className="text-danger">*</span>
+                </h5>
+              </Col>
+              <Col className="d-flex align-items-center">
+                <Form.Group className="w-100">
+                  <Form.Control
+                    name="email"
+                    type="email"
+                    placeholder="Enter email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    isInvalid={
+                      formData.email && !isValidEmailFormat(formData.email)
+                    }
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    Email must be in a valid format (e.g., user@example.com)
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Row className="text-start mb-3">
+              <Col md={3} className="d-flex align-items-center">
+                <h5>
+                  First Name: <span className="text-danger">*</span>
+                </h5>
+              </Col>
+              <Col className="d-flex align-items-center">
+                <Form.Control
+                  name="firstName"
+                  type="text"
+                  placeholder="Enter first name"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required
+                />
+              </Col>
+            </Row>
+
+            <Row className="text-start mb-3">
+              <Col md={3} className="d-flex align-items-center">
+                <h5>
+                  Last Name: <span className="text-danger">*</span>
+                </h5>
+              </Col>
+              <Col className="d-flex align-items-center">
+                <Form.Control
+                  name="lastName"
+                  type="text"
+                  placeholder="Enter last name"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
+                />
+              </Col>
+            </Row>
+
+            <Row className="text-start mb-3">
+              <Col md={3} className="d-flex align-items-center">
+                <h5>
+                  Phone Number: <span className="text-danger">*</span>
+                </h5>
+              </Col>
+              <Col className="d-flex align-items-center">
+                <Form.Group className="w-100">
+                  <Form.Control
+                    name="phone"
+                    type="text"
+                    placeholder="(###) ###-####"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
+                    isInvalid={
+                      formData.phone && !isValidPhoneFormat(formData.phone)
+                    }
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    Phone number must be a valid 10-digit format
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Row className="text-start mb-4">
+              <Col md={3} className="d-flex align-items-center">
+                <h5>
+                  ZIP Code: <span className="text-danger">*</span>
+                </h5>
+              </Col>
+              <Col className="d-flex align-items-center">
+                <Form.Control
+                  name="zip"
+                  type="text"
+                  placeholder="Enter ZIP code"
+                  value={formData.zip}
+                  onChange={handleChange}
+                  required
+                />
+              </Col>
+            </Row>
+
+            <div className="text-center mt-4">
+              <Button
+                variant="primary"
+                className="btn-green"
+                disabled={!isFormValid}
+                onClick={handleRegister}
+              >
+                Create Admin Account
+              </Button>
+            </div>
+          </Form>
+        </div>
+      </Container>
+    </>
   );
 }
 

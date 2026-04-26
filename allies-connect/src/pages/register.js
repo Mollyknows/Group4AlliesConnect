@@ -10,6 +10,7 @@ import {
   Tab,
   Tabs,
 } from "react-bootstrap";
+import { Helmet } from "react-helmet";
 import "../App.css";
 import { API_URL } from "../config";
 import {
@@ -388,547 +389,550 @@ function Register() {
   }
 
   return (
-    <Container className="register-container">
-      <div className="text-container mb-5">
-        <h1>Create Your Account!</h1>
-      </div>
-      <div className="feature-box">
+    <>
+      <Helmet><title>Register | Allies Connect</title></Helmet>
+      <Container className="register-container">
         <div className="text-container mb-5">
-          <h2>Register</h2>
-          <p>Select a tab to begin creating your desired account type.</p>
+          <h1>Create Your Account!</h1>
         </div>
-        <Tabs defaultActiveKey="volunteer" className="mb-3">
-          <Tab eventKey="volunteer" title="Volunteer">
-            <Form>
-              <Row className="text-start mb-3">
-                <Col md={3} className="d-flex align-items-center">
-                  <h5>
-                    Username: <span className="text-danger">*</span>
-                  </h5>
-                </Col>
-                <Col className="d-flex align-items-center">
-                  <Form.Group className="w-100">
-                    <Form.Control
-                      name="username"
-                      type="text"
-                      placeholder="Enter username"
-                      value={volFormData.username}
-                      onChange={handleVolChange}
-                      required
-                      isInvalid={
-                        volFormData.username &&
-                        !isValidUsernameFormat(volFormData.username)
-                      }
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      Username must be 3-50 characters and contain only letters,
-                      numbers, underscores, and hyphens (no spaces)
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="text-start mb-3">
-                <Col md={3} className="d-flex align-items-center">
-                  <h5>
-                    Password: <span className="text-danger">*</span>
-                  </h5>
-                </Col>
-                <Col className="d-flex align-items-center">
-                  <Form.Group className="w-100">
-                    <Form.Control
-                      name="password"
-                      type="password"
-                      placeholder="Enter password"
-                      value={volFormData.password}
-                      onChange={handleVolChange}
-                      required
-                      isInvalid={
-                        volFormData.password &&
-                        !isValidPasswordFormat(volFormData.password)
-                      }
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      {getPasswordErrors(volFormData.password).map((err, i) => (
-                        <div key={i}>{err}</div>
-                      ))}
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="text-start mb-3">
-                <Col md={3} className="d-flex align-items-center">
-                  <h5>
-                    Confirm Password: <span className="text-danger">*</span>
-                  </h5>
-                </Col>
-                <Col className="d-flex align-items-center">
-                  <Form.Group className="w-100">
-                    <Form.Control
-                      name="confirmPassword"
-                      type="password"
-                      placeholder="Enter password again"
-                      value={volFormData.confirmPassword}
-                      onChange={handleVolChange}
-                      required
-                      isInvalid={
-                        volFormData.confirmPassword &&
-                        volFormData.password !== volFormData.confirmPassword
-                      }
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      Passwords do not match
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="text-start mb-3">
-                <Col md={3} className="d-flex align-items-center">
-                  <h5>
-                    Email: <span className="text-danger">*</span>
-                  </h5>
-                </Col>
-                <Col className="d-flex align-items-center">
-                  <Form.Group className="w-100">
-                    <Form.Control
-                      name="email"
-                      type="email"
-                      placeholder="Enter email"
-                      value={volFormData.email}
-                      onChange={handleVolChange}
-                      required
-                      isInvalid={
-                        volFormData.email &&
-                        !isValidEmailFormat(volFormData.email)
-                      }
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      Email must be in a valid format (e.g., user@example.com)
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="text-start mb-3">
-                <Col md={3} className="d-flex align-items-center">
-                  <h5>
-                    First Name: <span className="text-danger">*</span>
-                  </h5>
-                </Col>
-                <Col className="d-flex align-items-center">
-                  <Form.Control
-                    name="firstName"
-                    type="text"
-                    placeholder="Enter first name"
-                    value={volFormData.firstName}
-                    onChange={handleVolChange}
-                    required
-                  />
-                </Col>
-              </Row>
-              <Row className="text-start mb-3">
-                <Col md={3} className="d-flex align-items-center">
-                  <h5>
-                    Last Name: <span className="text-danger">*</span>
-                  </h5>
-                </Col>
-                <Col className="d-flex align-items-center">
-                  <Form.Control
-                    name="lastName"
-                    type="text"
-                    placeholder="Enter last name"
-                    value={volFormData.lastName}
-                    onChange={handleVolChange}
-                    required
-                  />
-                </Col>
-              </Row>
-              <Row className="text-start mb-3">
-                <Col md={3} className="d-flex align-items-center">
-                  <h5>
-                    Phone Number: <span className="text-danger">*</span>
-                  </h5>
-                </Col>
-                <Col className="d-flex align-items-center">
-                  <Form.Group className="w-100">
-                    <Form.Control
-                      name="phone"
-                      type="tel"
-                      placeholder="(XXX) XXX-XXXX"
-                      value={volFormData.phone}
-                      onChange={handleVolChange}
-                      required
-                      maxLength="14"
-                      isInvalid={
-                        volFormData.phone &&
-                        !isValidPhoneFormat(volFormData.phone)
-                      }
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      Phone number must be a valid 10-digit format
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="text-start mb-3">
-                <Col md={3} className="d-flex align-items-center">
-                  <h5>
-                    ZIP Code: <span className="text-danger">*</span>
-                  </h5>
-                </Col>
-                <Col className="d-flex align-items-center">
-                  <Form.Control
-                    name="zip"
-                    type="tel"
-                    placeholder="XXXXX"
-                    value={volFormData.zip}
-                    onChange={handleVolChange}
-                    required
-                    maxLength="5"
-                  />
-                </Col>
-              </Row>
-            </Form>
-            <Row className="justify-content-end">
-              <Col md={4}>
-                <Button
-                  className="btn-gold"
-                  onClick={handleVolunteerRegister}
-                  disabled={!isVolFormValid}
-                  style={{ opacity: isVolFormValid ? 1 : 0.5 }}
-                >
-                  Register
-                </Button>
-              </Col>
-            </Row>
-          </Tab>
-
-          <Tab eventKey="organization" title="Organization">
-            <Form>
-              <Row className="text-start mb-3">
-                <Col md={3} className="d-flex align-items-center">
-                  <h5>
-                    Username: <span className="text-danger">*</span>
-                  </h5>
-                </Col>
-                <Col className="d-flex align-items-center">
-                  <Form.Group className="w-100">
-                    <Form.Control
-                      name="username"
-                      type="text"
-                      placeholder="Enter username"
-                      value={orgFormData.username}
-                      onChange={handleOrgChange}
-                      required
-                      isInvalid={
-                        orgFormData.username &&
-                        !isValidUsernameFormat(orgFormData.username)
-                      }
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      Username must be 3-50 characters and contain only letters,
-                      numbers, underscores, and hyphens (no spaces)
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="text-start mb-3">
-                <Col md={3} className="d-flex align-items-center">
-                  <h5>
-                    Password: <span className="text-danger">*</span>
-                  </h5>
-                </Col>
-                <Col className="d-flex align-items-center">
-                  <Form.Group className="w-100">
-                    <Form.Control
-                      name="password"
-                      type="password"
-                      placeholder="Enter password"
-                      value={orgFormData.password}
-                      onChange={handleOrgChange}
-                      required
-                      isInvalid={
-                        orgFormData.password &&
-                        !isValidPasswordFormat(orgFormData.password)
-                      }
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      {getPasswordErrors(orgFormData.password).map((err, i) => (
-                        <div key={i}>{err}</div>
-                      ))}
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="text-start mb-3">
-                <Col md={3} className="d-flex align-items-center">
-                  <h5>
-                    Confirm Password: <span className="text-danger">*</span>
-                  </h5>
-                </Col>
-                <Col className="d-flex align-items-center">
-                  <Form.Group className="w-100">
-                    <Form.Control
-                      name="confirmPassword"
-                      type="password"
-                      placeholder="Enter password again"
-                      value={orgFormData.confirmPassword}
-                      onChange={handleOrgChange}
-                      required
-                      isInvalid={
-                        orgFormData.confirmPassword &&
-                        orgFormData.password !== orgFormData.confirmPassword
-                      }
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      Passwords do not match
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="text-start mb-3">
-                <Col md={3} className="d-flex align-items-center">
-                  <h5>
-                    Email: <span className="text-danger">*</span>
-                  </h5>
-                </Col>
-                <Col className="d-flex align-items-center">
-                  <Form.Group className="w-100">
-                    <Form.Control
-                      name="email"
-                      type="email"
-                      placeholder="Enter email"
-                      value={orgFormData.email}
-                      onChange={handleOrgChange}
-                      required
-                      isInvalid={
-                        orgFormData.email &&
-                        !isValidEmailFormat(orgFormData.email)
-                      }
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      Email must be in a valid format (e.g., user@example.com)
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="text-start mb-3">
-                <Col md={3} className="d-flex align-items-center">
-                  <h5>
-                    First Name: <span className="text-danger">*</span>
-                  </h5>
-                </Col>
-                <Col className="d-flex align-items-center">
-                  <Form.Control
-                    name="firstName"
-                    type="text"
-                    placeholder="Enter first name"
-                    value={orgFormData.firstName}
-                    onChange={handleOrgChange}
-                    required
-                  />
-                </Col>
-              </Row>
-              <Row className="text-start mb-3">
-                <Col md={3} className="d-flex align-items-center">
-                  <h5>
-                    Last Name: <span className="text-danger">*</span>
-                  </h5>
-                </Col>
-                <Col className="d-flex align-items-center">
-                  <Form.Control
-                    name="lastName"
-                    type="text"
-                    placeholder="Enter last name"
-                    value={orgFormData.lastName}
-                    onChange={handleOrgChange}
-                    required
-                  />
-                </Col>
-              </Row>
-              <Row className="text-start mb-3">
-                <Col md={3} className="d-flex align-items-center">
-                  <h5>
-                    Organization Name: <span className="text-danger">*</span>
-                  </h5>
-                </Col>
-                <Col className="d-flex align-items-center">
-                  <Form.Control
-                    name="name"
-                    type="text"
-                    placeholder="Enter organization name"
-                    value={orgFormData.name}
-                    onChange={handleOrgChange}
-                    required
-                  />
-                </Col>
-              </Row>
-              <Row className="text-start mb-3">
-                <Col md={3} className="d-flex align-items-center">
-                  <h5>
-                    Phone Number: <span className="text-danger">*</span>
-                  </h5>
-                </Col>
-                <Col className="d-flex align-items-center">
-                  <Form.Group className="w-100">
-                    <Form.Control
-                      name="phone"
-                      type="tel"
-                      placeholder="(XXX) XXX-XXXX"
-                      value={orgFormData.phone}
-                      onChange={handleOrgChange}
-                      required
-                      maxLength="14"
-                      isInvalid={
-                        orgFormData.phone &&
-                        !isValidPhoneFormat(orgFormData.phone)
-                      }
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      Phone number must be a valid 10-digit format
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="text-start mb-3">
-                <Col md={3} className="d-flex align-items-center">
-                  <h5>
-                    ZIP Code: <span className="text-danger">*</span>
-                  </h5>
-                </Col>
-                <Col className="d-flex align-items-center">
-                  <Form.Control
-                    name="zip"
-                    type="tel"
-                    placeholder="XXXXX"
-                    value={orgFormData.zip}
-                    onChange={handleOrgChange}
-                    required
-                    maxLength="5"
-                  />
-                </Col>
-              </Row>
-              <div
-                style={{
-                  border: "2px solid #ccc",
-                  borderRadius: "10px",
-                  padding: "20px",
-                  marginBottom: "1rem",
-                  backgroundColor: "#f9f9f9",
-                }}
-              >
-                <h5 className="text-center mb-3" style={{ fontWeight: "bold" }}>
-                  EIN Verification
-                </h5>
+        <div className="feature-box">
+          <div className="text-container mb-5">
+            <h2>Register</h2>
+            <p>Select a tab to begin creating your desired account type.</p>
+          </div>
+          <Tabs defaultActiveKey="volunteer" className="mb-3">
+            <Tab eventKey="volunteer" title="Volunteer">
+              <Form>
                 <Row className="text-start mb-3">
                   <Col md={3} className="d-flex align-items-center">
                     <h5>
-                      EIN Number: <span className="text-danger">*</span>
+                      Username: <span className="text-danger">*</span>
                     </h5>
                   </Col>
                   <Col className="d-flex align-items-center">
                     <Form.Group className="w-100">
                       <Form.Control
-                        name="ein"
-                        type="tel"
-                        placeholder="Enter EIN number (XX-XXXXXXX)"
-                        value={orgFormData.ein}
-                        onChange={handleOrgChange}
+                        name="username"
+                        type="text"
+                        placeholder="Enter username"
+                        value={volFormData.username}
+                        onChange={handleVolChange}
                         required
                         isInvalid={
-                          orgFormData.ein &&
-                          hasNineDigits(orgFormData.ein) &&
-                          !isValidEINFormat(orgFormData.ein)
+                          volFormData.username &&
+                          !isValidUsernameFormat(volFormData.username)
                         }
-                        isValid={einVerified}
-                        maxLength="11"
                       />
                       <Form.Control.Feedback type="invalid">
-                        EIN must be in the format XX-XXXXXXX (9 digits)
+                        Username must be 3-50 characters and contain only letters,
+                        numbers, underscores, and hyphens (no spaces)
                       </Form.Control.Feedback>
-                      {einVerified && (
-                        <Form.Control.Feedback type="valid">
-                          EIN verified ✓
-                        </Form.Control.Feedback>
-                      )}
                     </Form.Group>
                   </Col>
                 </Row>
+                <Row className="text-start mb-3">
+                  <Col md={3} className="d-flex align-items-center">
+                    <h5>
+                      Password: <span className="text-danger">*</span>
+                    </h5>
+                  </Col>
+                  <Col className="d-flex align-items-center">
+                    <Form.Group className="w-100">
+                      <Form.Control
+                        name="password"
+                        type="password"
+                        placeholder="Enter password"
+                        value={volFormData.password}
+                        onChange={handleVolChange}
+                        required
+                        isInvalid={
+                          volFormData.password &&
+                          !isValidPasswordFormat(volFormData.password)
+                        }
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        {getPasswordErrors(volFormData.password).map((err, i) => (
+                          <div key={i}>{err}</div>
+                        ))}
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Row className="text-start mb-3">
+                  <Col md={3} className="d-flex align-items-center">
+                    <h5>
+                      Confirm Password: <span className="text-danger">*</span>
+                    </h5>
+                  </Col>
+                  <Col className="d-flex align-items-center">
+                    <Form.Group className="w-100">
+                      <Form.Control
+                        name="confirmPassword"
+                        type="password"
+                        placeholder="Enter password again"
+                        value={volFormData.confirmPassword}
+                        onChange={handleVolChange}
+                        required
+                        isInvalid={
+                          volFormData.confirmPassword &&
+                          volFormData.password !== volFormData.confirmPassword
+                        }
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        Passwords do not match
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Row className="text-start mb-3">
+                  <Col md={3} className="d-flex align-items-center">
+                    <h5>
+                      Email: <span className="text-danger">*</span>
+                    </h5>
+                  </Col>
+                  <Col className="d-flex align-items-center">
+                    <Form.Group className="w-100">
+                      <Form.Control
+                        name="email"
+                        type="email"
+                        placeholder="Enter email"
+                        value={volFormData.email}
+                        onChange={handleVolChange}
+                        required
+                        isInvalid={
+                          volFormData.email &&
+                          !isValidEmailFormat(volFormData.email)
+                        }
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        Email must be in a valid format (e.g., user@example.com)
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Row className="text-start mb-3">
+                  <Col md={3} className="d-flex align-items-center">
+                    <h5>
+                      First Name: <span className="text-danger">*</span>
+                    </h5>
+                  </Col>
+                  <Col className="d-flex align-items-center">
+                    <Form.Control
+                      name="firstName"
+                      type="text"
+                      placeholder="Enter first name"
+                      value={volFormData.firstName}
+                      onChange={handleVolChange}
+                      required
+                    />
+                  </Col>
+                </Row>
+                <Row className="text-start mb-3">
+                  <Col md={3} className="d-flex align-items-center">
+                    <h5>
+                      Last Name: <span className="text-danger">*</span>
+                    </h5>
+                  </Col>
+                  <Col className="d-flex align-items-center">
+                    <Form.Control
+                      name="lastName"
+                      type="text"
+                      placeholder="Enter last name"
+                      value={volFormData.lastName}
+                      onChange={handleVolChange}
+                      required
+                    />
+                  </Col>
+                </Row>
+                <Row className="text-start mb-3">
+                  <Col md={3} className="d-flex align-items-center">
+                    <h5>
+                      Phone Number: <span className="text-danger">*</span>
+                    </h5>
+                  </Col>
+                  <Col className="d-flex align-items-center">
+                    <Form.Group className="w-100">
+                      <Form.Control
+                        name="phone"
+                        type="tel"
+                        placeholder="(XXX) XXX-XXXX"
+                        value={volFormData.phone}
+                        onChange={handleVolChange}
+                        required
+                        maxLength="14"
+                        isInvalid={
+                          volFormData.phone &&
+                          !isValidPhoneFormat(volFormData.phone)
+                        }
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        Phone number must be a valid 10-digit format
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Row className="text-start mb-3">
+                  <Col md={3} className="d-flex align-items-center">
+                    <h5>
+                      ZIP Code: <span className="text-danger">*</span>
+                    </h5>
+                  </Col>
+                  <Col className="d-flex align-items-center">
+                    <Form.Control
+                      name="zip"
+                      type="tel"
+                      placeholder="XXXXX"
+                      value={volFormData.zip}
+                      onChange={handleVolChange}
+                      required
+                      maxLength="5"
+                    />
+                  </Col>
+                </Row>
+              </Form>
+              <Row className="justify-content-end">
+                <Col md={4}>
+                  <Button
+                    className="btn-gold"
+                    onClick={handleVolunteerRegister}
+                    disabled={!isVolFormValid}
+                    style={{ opacity: isVolFormValid ? 1 : 0.5 }}
+                  >
+                    Register
+                  </Button>
+                </Col>
+              </Row>
+            </Tab>
 
-                {einLoading && (
-                  <div className="text-center my-3">
-                    <Spinner animation="border" size="sm" className="me-2" />
-                    Verifying EIN...
-                  </div>
-                )}
-
-                {einError && (
-                  <Alert variant="danger" className="mt-2">
-                    {einError}
-                  </Alert>
-                )}
-
-                {einOrgData && !einVerified && (
-                  <Alert variant="info" className="mt-3">
-                    <h6 style={{ fontWeight: "bold" }}>
-                      Is this your organization?
-                    </h6>
-                    <p className="mb-1">
-                      <strong>Name:</strong> {einOrgData.name}
-                    </p>
-                    {einOrgData.address && (
-                      <p className="mb-1">
-                        <strong>Address:</strong> {einOrgData.address}
-                      </p>
-                    )}
-                    <p className="mb-3">
-                      <strong>Location:</strong> {einOrgData.city},{" "}
-                      {einOrgData.state} {einOrgData.zipcode}
-                    </p>
-                    <div className="d-flex gap-2">
-                      <Button
-                        variant="success"
-                        size="sm"
-                        onClick={() => setEinVerified(true)}
-                      >
-                        Yes, this is my organization
-                      </Button>
-                      <Button
-                        variant="outline-secondary"
-                        size="sm"
-                        onClick={() => {
-                          setEinOrgData(null);
-                          setOrgFormData((prev) => ({ ...prev, ein: "" }));
-                        }}
-                      >
-                        No, try a different EIN
-                      </Button>
-                    </div>
-                  </Alert>
-                )}
-
-                {einVerified && einOrgData && (
-                  <Alert variant="success" className="mt-2">
-                    <strong>Verified:</strong> {einOrgData.name} —{" "}
-                    {einOrgData.city}, {einOrgData.state}
-                  </Alert>
-                )}
-              </div>
-            </Form>
-            <Row className="justify-content-end">
-              <Col md={4}>
-                <Button
-                  className="btn-gold"
-                  onClick={handleOrganizationRegister}
-                  disabled={!isOrgFormValid}
-                  style={{ opacity: isOrgFormValid ? 1 : 0.5 }}
+            <Tab eventKey="organization" title="Organization">
+              <Form>
+                <Row className="text-start mb-3">
+                  <Col md={3} className="d-flex align-items-center">
+                    <h5>
+                      Username: <span className="text-danger">*</span>
+                    </h5>
+                  </Col>
+                  <Col className="d-flex align-items-center">
+                    <Form.Group className="w-100">
+                      <Form.Control
+                        name="username"
+                        type="text"
+                        placeholder="Enter username"
+                        value={orgFormData.username}
+                        onChange={handleOrgChange}
+                        required
+                        isInvalid={
+                          orgFormData.username &&
+                          !isValidUsernameFormat(orgFormData.username)
+                        }
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        Username must be 3-50 characters and contain only letters,
+                        numbers, underscores, and hyphens (no spaces)
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Row className="text-start mb-3">
+                  <Col md={3} className="d-flex align-items-center">
+                    <h5>
+                      Password: <span className="text-danger">*</span>
+                    </h5>
+                  </Col>
+                  <Col className="d-flex align-items-center">
+                    <Form.Group className="w-100">
+                      <Form.Control
+                        name="password"
+                        type="password"
+                        placeholder="Enter password"
+                        value={orgFormData.password}
+                        onChange={handleOrgChange}
+                        required
+                        isInvalid={
+                          orgFormData.password &&
+                          !isValidPasswordFormat(orgFormData.password)
+                        }
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        {getPasswordErrors(orgFormData.password).map((err, i) => (
+                          <div key={i}>{err}</div>
+                        ))}
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Row className="text-start mb-3">
+                  <Col md={3} className="d-flex align-items-center">
+                    <h5>
+                      Confirm Password: <span className="text-danger">*</span>
+                    </h5>
+                  </Col>
+                  <Col className="d-flex align-items-center">
+                    <Form.Group className="w-100">
+                      <Form.Control
+                        name="confirmPassword"
+                        type="password"
+                        placeholder="Enter password again"
+                        value={orgFormData.confirmPassword}
+                        onChange={handleOrgChange}
+                        required
+                        isInvalid={
+                          orgFormData.confirmPassword &&
+                          orgFormData.password !== orgFormData.confirmPassword
+                        }
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        Passwords do not match
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Row className="text-start mb-3">
+                  <Col md={3} className="d-flex align-items-center">
+                    <h5>
+                      Email: <span className="text-danger">*</span>
+                    </h5>
+                  </Col>
+                  <Col className="d-flex align-items-center">
+                    <Form.Group className="w-100">
+                      <Form.Control
+                        name="email"
+                        type="email"
+                        placeholder="Enter email"
+                        value={orgFormData.email}
+                        onChange={handleOrgChange}
+                        required
+                        isInvalid={
+                          orgFormData.email &&
+                          !isValidEmailFormat(orgFormData.email)
+                        }
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        Email must be in a valid format (e.g., user@example.com)
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Row className="text-start mb-3">
+                  <Col md={3} className="d-flex align-items-center">
+                    <h5>
+                      First Name: <span className="text-danger">*</span>
+                    </h5>
+                  </Col>
+                  <Col className="d-flex align-items-center">
+                    <Form.Control
+                      name="firstName"
+                      type="text"
+                      placeholder="Enter first name"
+                      value={orgFormData.firstName}
+                      onChange={handleOrgChange}
+                      required
+                    />
+                  </Col>
+                </Row>
+                <Row className="text-start mb-3">
+                  <Col md={3} className="d-flex align-items-center">
+                    <h5>
+                      Last Name: <span className="text-danger">*</span>
+                    </h5>
+                  </Col>
+                  <Col className="d-flex align-items-center">
+                    <Form.Control
+                      name="lastName"
+                      type="text"
+                      placeholder="Enter last name"
+                      value={orgFormData.lastName}
+                      onChange={handleOrgChange}
+                      required
+                    />
+                  </Col>
+                </Row>
+                <Row className="text-start mb-3">
+                  <Col md={3} className="d-flex align-items-center">
+                    <h5>
+                      Organization Name: <span className="text-danger">*</span>
+                    </h5>
+                  </Col>
+                  <Col className="d-flex align-items-center">
+                    <Form.Control
+                      name="name"
+                      type="text"
+                      placeholder="Enter organization name"
+                      value={orgFormData.name}
+                      onChange={handleOrgChange}
+                      required
+                    />
+                  </Col>
+                </Row>
+                <Row className="text-start mb-3">
+                  <Col md={3} className="d-flex align-items-center">
+                    <h5>
+                      Phone Number: <span className="text-danger">*</span>
+                    </h5>
+                  </Col>
+                  <Col className="d-flex align-items-center">
+                    <Form.Group className="w-100">
+                      <Form.Control
+                        name="phone"
+                        type="tel"
+                        placeholder="(XXX) XXX-XXXX"
+                        value={orgFormData.phone}
+                        onChange={handleOrgChange}
+                        required
+                        maxLength="14"
+                        isInvalid={
+                          orgFormData.phone &&
+                          !isValidPhoneFormat(orgFormData.phone)
+                        }
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        Phone number must be a valid 10-digit format
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Row className="text-start mb-3">
+                  <Col md={3} className="d-flex align-items-center">
+                    <h5>
+                      ZIP Code: <span className="text-danger">*</span>
+                    </h5>
+                  </Col>
+                  <Col className="d-flex align-items-center">
+                    <Form.Control
+                      name="zip"
+                      type="tel"
+                      placeholder="XXXXX"
+                      value={orgFormData.zip}
+                      onChange={handleOrgChange}
+                      required
+                      maxLength="5"
+                    />
+                  </Col>
+                </Row>
+                <div
+                  style={{
+                    border: "2px solid #ccc",
+                    borderRadius: "10px",
+                    padding: "20px",
+                    marginBottom: "1rem",
+                    backgroundColor: "#f9f9f9",
+                  }}
                 >
-                  Register
-                </Button>
-              </Col>
-            </Row>
-          </Tab>
-        </Tabs>
-      </div>
-    </Container>
+                  <h5 className="text-center mb-3" style={{ fontWeight: "bold" }}>
+                    EIN Verification
+                  </h5>
+                  <Row className="text-start mb-3">
+                    <Col md={3} className="d-flex align-items-center">
+                      <h5>
+                        EIN Number: <span className="text-danger">*</span>
+                      </h5>
+                    </Col>
+                    <Col className="d-flex align-items-center">
+                      <Form.Group className="w-100">
+                        <Form.Control
+                          name="ein"
+                          type="tel"
+                          placeholder="Enter EIN number (XX-XXXXXXX)"
+                          value={orgFormData.ein}
+                          onChange={handleOrgChange}
+                          required
+                          isInvalid={
+                            orgFormData.ein &&
+                            hasNineDigits(orgFormData.ein) &&
+                            !isValidEINFormat(orgFormData.ein)
+                          }
+                          isValid={einVerified}
+                          maxLength="11"
+                        />
+                        <Form.Control.Feedback type="invalid">
+                          EIN must be in the format XX-XXXXXXX (9 digits)
+                        </Form.Control.Feedback>
+                        {einVerified && (
+                          <Form.Control.Feedback type="valid">
+                            EIN verified ✓
+                          </Form.Control.Feedback>
+                        )}
+                      </Form.Group>
+                    </Col>
+                  </Row>
+
+                  {einLoading && (
+                    <div className="text-center my-3">
+                      <Spinner animation="border" size="sm" className="me-2" />
+                      Verifying EIN...
+                    </div>
+                  )}
+
+                  {einError && (
+                    <Alert variant="danger" className="mt-2">
+                      {einError}
+                    </Alert>
+                  )}
+
+                  {einOrgData && !einVerified && (
+                    <Alert variant="info" className="mt-3">
+                      <h6 style={{ fontWeight: "bold" }}>
+                        Is this your organization?
+                      </h6>
+                      <p className="mb-1">
+                        <strong>Name:</strong> {einOrgData.name}
+                      </p>
+                      {einOrgData.address && (
+                        <p className="mb-1">
+                          <strong>Address:</strong> {einOrgData.address}
+                        </p>
+                      )}
+                      <p className="mb-3">
+                        <strong>Location:</strong> {einOrgData.city},{" "}
+                        {einOrgData.state} {einOrgData.zipcode}
+                      </p>
+                      <div className="d-flex gap-2">
+                        <Button
+                          variant="success"
+                          size="sm"
+                          onClick={() => setEinVerified(true)}
+                        >
+                          Yes, this is my organization
+                        </Button>
+                        <Button
+                          variant="outline-secondary"
+                          size="sm"
+                          onClick={() => {
+                            setEinOrgData(null);
+                            setOrgFormData((prev) => ({ ...prev, ein: "" }));
+                          }}
+                        >
+                          No, try a different EIN
+                        </Button>
+                      </div>
+                    </Alert>
+                  )}
+
+                  {einVerified && einOrgData && (
+                    <Alert variant="success" className="mt-2">
+                      <strong>Verified:</strong> {einOrgData.name} —{" "}
+                      {einOrgData.city}, {einOrgData.state}
+                    </Alert>
+                  )}
+                </div>
+              </Form>
+              <Row className="justify-content-end">
+                <Col md={4}>
+                  <Button
+                    className="btn-gold"
+                    onClick={handleOrganizationRegister}
+                    disabled={!isOrgFormValid}
+                    style={{ opacity: isOrgFormValid ? 1 : 0.5 }}
+                  >
+                    Register
+                  </Button>
+                </Col>
+              </Row>
+            </Tab>
+          </Tabs>
+        </div>
+      </Container>
+    </>
   );
 }
 
