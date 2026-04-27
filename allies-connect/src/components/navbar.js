@@ -27,9 +27,6 @@ function MyNavbar({ user, setUser , role, setRole }) {
 
     return (
         <>
-            <a href="#main-content" className="visually-hidden-focusable">
-                Skip to main content
-            </a>
             <Navbar className="navbar" expand="lg">
                 <Container>
                     <Navbar.Brand href="/" className="d-flex align-items-center">

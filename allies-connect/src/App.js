@@ -33,59 +33,57 @@ function App() {
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <BrowserRouter>
         <MyNavbar user={user} setUser={setUser} role={role} setRole={setRole} />
-        <main id="main-content">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/maps" element={<Maps />} />
-            <Route
-              path="/login"
-              element={<Login setUser={setUser} setRole={setRole} />}
-            />
-            <Route path="/events" element={<Events />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password/:token" element={<ResetPassword />} />
-            <Route path="/invite/:token" element={<InviteRegister />} />
-            <Route
-              path="/admin-invite/:token"
-              element={<AdminInviteRegister />}
-            />
-            <Route
-              path="/provider"
-              element={
-                <AuthRoute user={user} role={role} requiredRole="provider">
-                  <Provider
-                    user={user}
-                    setUser={setUser}
-                    role={role}
-                    setRole={setRole}
-                  />
-                </AuthRoute>
-              }
-            />
-            <Route
-              path="/volunteer"
-              element={
-                <AuthRoute user={user} role={role} requiredRole="volunteer">
-                  <Volunteer
-                    user={user}
-                    setUser={setUser}
-                    role={role}
-                    setRole={setRole}
-                  />
-                </AuthRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <AuthRoute user={user} role={role} requiredRole="admin">
-                  <Admin />
-                </AuthRoute>
-              }
-            />
-          </Routes>
-        </main>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/maps" element={<Maps />} />
+          <Route
+            path="/login"
+            element={<Login setUser={setUser} setRole={setRole} />}
+          />
+          <Route path="/events" element={<Events />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/invite/:token" element={<InviteRegister />} />
+          <Route
+            path="/admin-invite/:token"
+            element={<AdminInviteRegister />}
+          />
+          <Route
+            path="/provider"
+            element={
+              <AuthRoute user={user} role={role} requiredRole="provider">
+                <Provider
+                  user={user}
+                  setUser={setUser}
+                  role={role}
+                  setRole={setRole}
+                />
+              </AuthRoute>
+            }
+          />
+          <Route
+            path="/volunteer"
+            element={
+              <AuthRoute user={user} role={role} requiredRole="volunteer">
+                <Volunteer
+                  user={user}
+                  setUser={setUser}
+                  role={role}
+                  setRole={setRole}
+                />
+              </AuthRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <AuthRoute user={user} role={role} requiredRole="admin">
+                <Admin />
+              </AuthRoute>
+            }
+          />
+        </Routes>
       </BrowserRouter>
     </LocalizationProvider>
   );
