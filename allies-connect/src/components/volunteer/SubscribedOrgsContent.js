@@ -63,19 +63,19 @@ function SubscribedOrgsContent({ onViewDetails, userId }) {
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("resource_name")}
-            >
+              aria-label="Sort by resource name">
               Resource {sortSymbol("resource_name")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("provider_name")}
-            >
+              aria-label="Sort by organization">
               Organization {sortSymbol("provider_name")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("active")}
-            >
+              aria-label="Sort by status">
               Status {sortSymbol("active")}
             </th>
             <th>Action</th>

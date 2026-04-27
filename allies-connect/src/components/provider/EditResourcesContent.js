@@ -41,19 +41,19 @@ function EditResourcesContent({ onViewDetails, providerId }) {
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("name")}
-            >
+              aria-label="Sort by name">
               Name {sortSymbol("name")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("category_name")}
-            >
+              aria-label="Sort by category">
               Category {sortSymbol("category_name")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("city")}
-            >
+              aria-label="Sort by location">
               Location {sortSymbol("city")}
             </th>
             <th>Action</th>

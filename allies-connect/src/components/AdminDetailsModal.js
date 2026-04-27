@@ -41,6 +41,7 @@ function PendingOrgsContent({ data, onSave }) {
   }, [data]);
 
   const handleApprove = async () => {
+    if (!window.confirm("Are you sure you want to approve this organization? This action cannot be undone.")) return;
     try {
       await axios.patch(
         `${API_URL}/api/admin/providers/${form.provider_id}/approve`,
@@ -55,6 +56,7 @@ function PendingOrgsContent({ data, onSave }) {
   };
 
   const handleReject = async () => {
+    if (!window.confirm("Are you sure you want to reject this organization? This action cannot be undone.")) return;
     try {
       await axios.patch(
         `${API_URL}/api/admin/providers/${form.provider_id}/status`,

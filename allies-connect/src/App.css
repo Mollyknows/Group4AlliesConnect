@@ -31,7 +31,10 @@
   background-color: var(--gold);
 }
 
-.navbar .navbar-brand,
+.navbar .navbar-brand {
+  color: black;
+}
+
 .navbar .nav-link {
   color: white;
 }
@@ -57,19 +60,19 @@
 .btn-gold {
   background-color: var(--gold) !important;
   border: 2px solid var(--gold) !important;
-  color: white !important;
+  color: black !important;
   font-size: 1.1rem;
   border-radius: 4px;
 }
 
 .btn-gold:hover {
   background-color: var(--gold-dark) !important;
-  color: white !important;
+  color: black !important;
 }
 
 .btn-white {
   background-color: white !important;
-  color: var(--gold) !important;
+  color: black !important;
   font-size: 1.1rem;
   border: 2px solid var(--gold);
   border-radius: 4px;
@@ -77,12 +80,12 @@
 
 .btn-white:hover {
   background-color: whitesmoke !important;
-  color: var(--gold) !important;
+  color: black !important;
 }
 
 .outline-warning {
   background-color: white !important;
-  color: var(--gold) !important;
+  color: black !important;
   border: 2px solid var(--gold) !important;
   border-radius: 8px !important;
 }
@@ -91,14 +94,14 @@
 .outline-warning:focus,
 .outline-warning:active {
   background-color: whitesmoke !important;
-  color: var(--gold) !important;
+  color: black !important;
   border-color: var(--gold) !important;
 }
 
 .btn-secondary,
 .btn-outline-secondary {
   background-color: white !important;
-  color: var(--gold) !important;
+  color: black !important;
   font-size: 1.1rem;
   border: 2px solid var(--gold) !important;
   border-radius: 4px;
@@ -111,7 +114,7 @@
 .btn-outline-secondary:focus,
 .btn-outline-secondary:active {
   background-color: whitesmoke !important;
-  color: var(--gold) !important;
+  color: black !important;
   border-color: var(--gold) !important;
 }
 
@@ -120,34 +123,34 @@
 .btn-outline-secondary:disabled,
 .btn-outline-secondary.disabled {
   background-color: #f8f8f8 !important;
-  color: var(--gold) !important;
+  color: black !important;
   border-color: var(--gold) !important;
   opacity: 0.65;
 }
 
 .btn-green {
-  background-color: #28a745 !important;
-  border: solid 2px #28a745 !important;
+  background-color: #218838 !important;
+  border: solid 2px #218838 !important;
   color: white !important;
   font-size: 1.1rem;
   border-radius: 4px;
 }
 
 .btn-green:hover {
-  background-color: #218838 !important;
+  background-color: #186328 !important;
   color: white !important;
 }
 
 .btn-red {
-  background-color: #dc3545 !important;
-  border: solid 2px #dc3545 !important;
+  background-color: #DB3344 !important;
+  border: solid 2px #DB3344 !important;
   color: white !important;
   font-size: 1.1rem;
   border-radius: 4px;
 }
 
 .btn-red:hover {
-  background-color: #c82333 !important;
+  background-color: #A51D2B !important;
   color: white !important;
 }
 
@@ -197,7 +200,7 @@
 .navbar-username {
   display: inline-flex;
   align-items: center;
-  color: white !important;
+  color: black !important;
 }
 
 .modal-wide .modal-dialog {
@@ -218,13 +221,13 @@
 
 :where(.modal) :where(button:not(.btn-close)):where(:hover, :focus, :active) {
   background-color: whitesmoke;
-  color: var(--gold);
+  color: black;
   border-color: var(--gold);
 }
 
 :where(.modal) :where(button:not(.btn-close)):where(:disabled, .disabled) {
   background-color: #f8f8f8;
-  color: var(--gold);
+  color: black;
   border-color: var(--gold);
   opacity: 0.65;
 }

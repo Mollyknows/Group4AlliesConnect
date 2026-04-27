@@ -10,6 +10,7 @@ import {
   Form,
   Row,
 } from "react-bootstrap";
+import { Helmet } from 'react-helmet';
 import { useSearchParams } from "react-router-dom";
 
 import "../App.css";
@@ -129,145 +130,148 @@ function Events() {
   ].sort();
 
   return (
-    <Container className="event-container">
-      <Form>
-        <Row className="mb-3">
-          <Col md={4}>
-            <h3>Filter Events</h3>
-            <Button
-              variant="outline-secondary"
-              size="sm"
-              className="w-100 mb-3"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              {showFilters ? "Hide Filters" : "Show Filters"}
-            </Button>
-            <Collapse in={showFilters}>
-              <div>
-                <Button
-                  variant="outline-secondary"
-                  size="sm"
-                  className="w-100 mb-3"
-                  onClick={clearFilters}
-                >
-                  Clear Filters
-                </Button>
-                <Form.Group controlId="eventDate">
-                  <DateCalendar
-                    value={selectedDate}
-                    onChange={(date) => setSelectedDate(date)}
-                  />
-                </Form.Group>
-                <Form.Group controlId="eventName">
-                  <Form.Label>Event Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Search by event name"
-                    value={eventNameFilter}
-                    onChange={(e) => setEventNameFilter(e.target.value)}
-                  />
-                </Form.Group>
-                <Form.Group controlId="eventType">
-                  <Form.Label className="mt-2">Event Type</Form.Label>
-                  <Form.Select
-                    value={eventTypeFilter}
-                    onChange={(e) => setEventTypeFilter(e.target.value)}
+    <>
+      <Helmet><title>Events | Allies Connect</title></Helmet>
+      <Container className="event-container">
+        <Form>
+          <Row className="mb-3">
+            <Col md={4}>
+              <h3>Filter Events</h3>
+              <Button
+                variant="outline-secondary"
+                size="sm"
+                className="w-100 mb-3"
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                {showFilters ? "Hide Filters" : "Show Filters"}
+              </Button>
+              <Collapse in={showFilters}>
+                <div>
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    className="w-100 mb-3"
+                    onClick={clearFilters}
                   >
-                    <option>All Types</option>
-                    <option>Food Assistance</option>
-                    <option>Housing</option>
-                    <option>Educational Workshop</option>
-                  </Form.Select>
-                </Form.Group>
-                {/* In future, this could be dynamically called from user's Location */}
-                <Form.Group controlId="eventLocation">
-                  <Form.Label className="mt-2">Location</Form.Label>
-                  <Form.Select
-                    value={eventLocationFilter}
-                    onChange={(e) => setEventLocationFilter(e.target.value)}
-                  >
-                    <option>All Locations</option>
-                    {uniqueLocations.map((location) => (
-                      <option key={location} value={location}>
-                        {location}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-                <Form.Group controlId="eventOrgName">
-                  <Form.Label className="mt-2">Organization Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Search by organization name"
-                    value={eventOrgNameFilter}
-                    onChange={(e) => setEventOrgNameFilter(e.target.value)}
-                  />
-                </Form.Group>
-                <Form.Group controlId="eventAcceptingVolunteers">
-                  <Form.Check
-                    className="mt-2"
-                    type="checkbox"
-                    label="Events Accepting Volunteers"
-                  />
-                </Form.Group>
-                <Form.Group controlId="showInactiveEvents">
-                  <Form.Check
-                    className="mt-2"
-                    type="checkbox"
-                    label="Show Inactive Events"
-                    checked={showInactiveEvents}
-                    onChange={(e) => setShowInactiveEvents(e.target.checked)}
-                  />
-                </Form.Group>
+                    Clear Filters
+                  </Button>
+                  <Form.Group controlId="eventDate">
+                    <DateCalendar
+                      value={selectedDate}
+                      onChange={(date) => setSelectedDate(date)}
+                    />
+                  </Form.Group>
+                  <Form.Group controlId="eventName">
+                    <Form.Label>Event Name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="Search by event name"
+                      value={eventNameFilter}
+                      onChange={(e) => setEventNameFilter(e.target.value)}
+                    />
+                  </Form.Group>
+                  <Form.Group controlId="eventType">
+                    <Form.Label className="mt-2">Event Type</Form.Label>
+                    <Form.Select
+                      value={eventTypeFilter}
+                      onChange={(e) => setEventTypeFilter(e.target.value)}
+                    >
+                      <option>All Types</option>
+                      <option>Food Assistance</option>
+                      <option>Housing</option>
+                      <option>Educational Workshop</option>
+                    </Form.Select>
+                  </Form.Group>
+                  {/* In future, this could be dynamically called from user's Location */}
+                  <Form.Group controlId="eventLocation">
+                    <Form.Label className="mt-2">Location</Form.Label>
+                    <Form.Select
+                      value={eventLocationFilter}
+                      onChange={(e) => setEventLocationFilter(e.target.value)}
+                    >
+                      <option>All Locations</option>
+                      {uniqueLocations.map((location) => (
+                        <option key={location} value={location}>
+                          {location}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                  <Form.Group controlId="eventOrgName">
+                    <Form.Label className="mt-2">Organization Name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="Search by organization name"
+                      value={eventOrgNameFilter}
+                      onChange={(e) => setEventOrgNameFilter(e.target.value)}
+                    />
+                  </Form.Group>
+                  <Form.Group controlId="eventAcceptingVolunteers">
+                    <Form.Check
+                      className="mt-2"
+                      type="checkbox"
+                      label="Events Accepting Volunteers"
+                    />
+                  </Form.Group>
+                  <Form.Group controlId="showInactiveEvents">
+                    <Form.Check
+                      className="mt-2"
+                      type="checkbox"
+                      label="Show Inactive Events"
+                      checked={showInactiveEvents}
+                      onChange={(e) => setShowInactiveEvents(e.target.checked)}
+                    />
+                  </Form.Group>
+                </div>
+              </Collapse>
+            </Col>
+            <Col className="ms-4" md={6}>
+              <h3>Upcoming Events</h3>
+              {loading && <p>Loading events...</p>}
+              {error && <p>Error: {error}</p>}
+              <div className="event-list-scroll">
+                {filteredEvents.length === 0 ? (
+                  <p>No events found. Please adjust your search criteria.</p>
+                ) : (
+                  filteredEvents.map((event) => (
+                    <Card
+                      key={event.id}
+                      className="mb-3"
+                      style={{ cursor: "pointer" }}
+                      onClick={() => {
+                        setSelectedEvent(event);
+                        setShowEventModal(true);
+                      }}
+                    >
+                      <Card.Body>
+                        <Card.Title>{event.title}</Card.Title>
+                        <Card.Subtitle className="mb-2 text-muted">
+                          {event.type} • {event.location}
+                        </Card.Subtitle>
+                        <Card.Text>
+                          Organization: {event.organization}
+                          <br />
+                          Start Date:{" "}
+                          {dayjs(event.startDatetime).format("hh:mmA MM-DD-YYYY")}
+                          <br />
+                          End Date:{" "}
+                          {dayjs(event.endDatetime).format("hh:mmA MM-DD-YYYY")}
+                        </Card.Text>
+                      </Card.Body>
+                    </Card>
+                  ))
+                )}
               </div>
-            </Collapse>
-          </Col>
-          <Col className="ms-4" md={6}>
-            <h3>Upcoming Events</h3>
-            {loading && <p>Loading events...</p>}
-            {error && <p>Error: {error}</p>}
-            <div className="event-list-scroll">
-              {filteredEvents.length === 0 ? (
-                <p>No events found. Please adjust your search criteria.</p>
-              ) : (
-                filteredEvents.map((event) => (
-                  <Card
-                    key={event.id}
-                    className="mb-3"
-                    style={{ cursor: "pointer" }}
-                    onClick={() => {
-                      setSelectedEvent(event);
-                      setShowEventModal(true);
-                    }}
-                  >
-                    <Card.Body>
-                      <Card.Title>{event.title}</Card.Title>
-                      <Card.Subtitle className="mb-2 text-muted">
-                        {event.type} • {event.location}
-                      </Card.Subtitle>
-                      <Card.Text>
-                        Organization: {event.organization}
-                        <br />
-                        Start Date:{" "}
-                        {dayjs(event.startDatetime).format("hh:mmA MM-DD-YYYY")}
-                        <br />
-                        End Date:{" "}
-                        {dayjs(event.endDatetime).format("hh:mmA MM-DD-YYYY")}
-                      </Card.Text>
-                    </Card.Body>
-                  </Card>
-                ))
-              )}
-            </div>
-          </Col>
-        </Row>
-      </Form>
-      <EventDetailsModal
-        show={showEventModal}
-        onHide={() => setShowEventModal(false)}
-        event={selectedEvent}
-      />
-    </Container>
+            </Col>
+          </Row>
+        </Form>
+        <EventDetailsModal
+          show={showEventModal}
+          onHide={() => setShowEventModal(false)}
+          event={selectedEvent}
+        />
+      </Container>
+    </>
   );
 }
 
