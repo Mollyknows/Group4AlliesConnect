@@ -29,7 +29,10 @@ function EventDetailsModal({ show, onHide, event }) {
   // Fetch user signups whenever the modal opens with an event
   useEffect(() => {
     if (show && event) {
-      if (isVolunteer) fetchMySignups();
+      if (isVolunteer) {
+        fetchMySignups();
+        fetchRsvpStatus();
+      }
     }
     if (!show) {
       // Reset state when modal closes
@@ -59,15 +62,42 @@ function EventDetailsModal({ show, onHide, event }) {
     }
   };
 
+  const fetchRsvpStatus = async () => {
+    if (!event?.id || !userId) return;
+    try {
+      const res = await fetch(
+        `${API_URL}/api/events/${event.id}/rsvp/${userId}`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setAttending(!!data?.rsvp?.status);
+      }
+    } catch (err) {
+      console.error("Error fetching RSVP status:", err);
+    }
+  };
+
   const handleAttend = async () => {
     if (!event?.id) return;
-    setAttending(true);
     try {
-      await fetch(`${API_URL}/api/events/${event.id}/attend`, {
+      await fetch(`${API_URL}/api/events/${event.id}/rsvp`, {
         method: "POST",
       });
+      setAttending(true);
     } catch (err) {
-      console.error("Error recording attendance:", err);
+      console.error("Error recording RSVP:", err);
+    }
+  };
+
+  const handleCancelRsvp = async () => {
+    if (!event?.id) return;
+    try {
+      await fetch(`${API_URL}/api/events/${event.id}/rsvp`, {
+        method: "DELETE",
+      });
+      setAttending(false);
+    } catch (err) {
+      console.error("Error cancelling RSVP:", err);
     }
   };
 
@@ -217,9 +247,14 @@ function EventDetailsModal({ show, onHide, event }) {
                   </Button>
                 )}
                 {attending ? (
-                  <Button variant="success" disabled>
-                    ✓ Attending
-                  </Button>
+                  <>
+                    <Button variant="success" disabled>
+                      ✓ Attending
+                    </Button>
+                    <Button variant="outline-danger" onClick={handleCancelRsvp}>
+                      Cancel RSVP
+                    </Button>
+                  </>
                 ) : (
                   <Button
                     className="btn-gold"
