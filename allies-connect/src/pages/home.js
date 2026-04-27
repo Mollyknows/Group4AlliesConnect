@@ -24,7 +24,7 @@ function Home() {
         <div className="feature-box">
           <Row className="text-center">
             <Col md={4} className="mb-4 d-flex flex-column align-items-center">
-              <BsGeoAlt className="feature-icon" />
+              <BsGeoAlt className="feature-icon" aria-hidden="true" />
               <h3 className="text-center flex-grow-1">Find Local Resources</h3>
               <p className="text-center flex-grow-1">
                 View a map-directory of local community resources for food
@@ -35,7 +35,7 @@ function Home() {
               </Button>
             </Col>
             <Col md={4} className="mb-4 d-flex flex-column align-items-center">
-              <BsCalendar className="feature-icon" />
+              <BsCalendar className="feature-icon" aria-hidden="true" />
               <h3 className="text-center flex-grow-1">Browse Upcoming Events</h3>
               <p className="text-center flex-grow-1">
                 View a calendar of upcoming not-for-profit community events in
@@ -46,7 +46,7 @@ function Home() {
               </Button>
             </Col>
             <Col md={4} className="mb-4 d-flex flex-column align-items-center">
-              <BsPerson className="feature-icon" />
+              <BsPerson className="feature-icon" aria-hidden="true" />
               <h3 className="text-center flex-grow-1">Volunteer Today!</h3>
               <p className="text-center flex-grow-1">
                 Sign up to help volunteer with events and local not-for-profit

@@ -17,6 +17,7 @@ import Provider from "./pages/provider";
 import Register from "./pages/register";
 import ResetPassword from "./pages/resetPassword";
 import Volunteer from "./pages/volunteer";
+import Footer from "./components/Footer";
 
 function App() {
   const [user, setUser] = useState(() => {
@@ -84,6 +85,7 @@ function App() {
             }
           />
         </Routes>
+        <Footer user={user} setUser={setUser} role={role} setRole={setRole} />
       </BrowserRouter>
     </LocalizationProvider>
   );

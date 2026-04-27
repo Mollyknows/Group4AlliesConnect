@@ -7,6 +7,7 @@ import { API_URL } from "../config";
 
 function Admin({ user, setUser, role, setRole }) {
   const [modalType, setModalType] = useState("");
+  const [exportStatus, setExportStatus] = useState("");
 
   const exportToCSV = async () => {
     try {
@@ -18,7 +19,7 @@ function Admin({ user, setUser, role, setRole }) {
       const data = await response.json();
 
       if (!Array.isArray(data) || data.length === 0) {
-        alert("No log data available to export.");
+        setExportStatus("No log data available to export.");
         return;
       }
 
@@ -40,9 +41,10 @@ function Admin({ user, setUser, role, setRole }) {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+      setExportStatus("Log data exported successfully.");
     } catch (error) {
       console.error("Error exporting log data:", error);
-      alert("Failed to export log data. Please try again.");
+      setExportStatus("Failed to export log data. Please try again.");
     }
   };
 
@@ -129,6 +131,9 @@ function Admin({ user, setUser, role, setRole }) {
           type={modalType}
           onHide={() => setModalType("")}
         />
+        <div aria-live="polite" aria-atomic="true" className="visually-hidden">
+          {exportStatus}
+        </div>
       </Container>
     </>
   );

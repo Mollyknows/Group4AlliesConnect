@@ -55,37 +55,37 @@ function EditEventsContent({ onViewDetails, providerId }) {
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("title")}
-            >
+              aria-label="Sort by title">
               Title {sortSymbol("title")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("start_datetime")}
-            >
+              aria-label="Sort by start date">
               Start {sortSymbol("start_datetime")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("category_name")}
-            >
+              aria-label="Sort by category">
               Category {sortSymbol("category_name")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("city")}
-            >
+              aria-label="Sort by location">
               Location {sortSymbol("city")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("attendance")}
-            >
+              aria-label="Sort by attendance">
               Attendance {sortSymbol("attendance")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("capacity")}
-            >
+              aria-label="Sort by capacity">
               Capacity {sortSymbol("capacity")}
             </th>
             <th>Action</th>

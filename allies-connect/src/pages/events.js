@@ -131,7 +131,7 @@ function Events() {
 
   return (
     <>
-      <Helmet><title>Home | Allies Connect</title></Helmet>
+      <Helmet><title>Events | Allies Connect</title></Helmet>
       <Container className="event-container">
         <Form>
           <Row className="mb-3">

@@ -2,16 +2,16 @@ import { useEffect, useState } from "react";
 import { Table } from "react-bootstrap";
 import "../../App.css";
 import { API_URL, useTableDataProcessing } from "./providerHelpers";
-
+ 
 function ExportHoursContent({ onViewDetails, userId }) {
   const [hours, setHours] = useState([]);
   const { sortedData, handleSort, sortSymbol, searchQuery, setSearchQuery } =
     useTableDataProcessing(hours, "title");
-
+ 
   useEffect(() => {
     fetchHours();
   }, []);
-
+ 
   const fetchHours = async () => {
     try {
       const response = await fetch(
@@ -39,7 +39,7 @@ function ExportHoursContent({ onViewDetails, userId }) {
       setHours([]);
     }
   };
-
+ 
   const handleExportCSV = async () => {
     try {
       const response = await fetch(
@@ -58,7 +58,7 @@ function ExportHoursContent({ onViewDetails, userId }) {
       alert("Failed to export volunteer hours.");
     }
   };
-
+ 
   return (
     <>
       <div className="d-flex justify-content-between mb-3">
@@ -79,31 +79,31 @@ function ExportHoursContent({ onViewDetails, userId }) {
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("Opportunity")}
-            >
+              aria-label="Sort by opportunity">
               Opportunity {sortSymbol("Opportunity")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("Provider")}
-            >
+              aria-label="Sort by provider">
               Provider {sortSymbol("Provider")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("Start Time")}
-            >
+              aria-label="Sort by start time">
               Start {sortSymbol("Start Time")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("End Time")}
-            >
+              aria-label="Sort by end time">
               End {sortSymbol("End Time")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("Hours Worked")}
-            >
+              aria-label="Sort by hours worked">
               Hours {sortSymbol("Hours Worked")}
             </th>
             <th>Action</th>
@@ -140,5 +140,5 @@ function ExportHoursContent({ onViewDetails, userId }) {
     </>
   );
 }
-
+ 
 export default ExportHoursContent;
