@@ -1,27 +1,27 @@
-describe('User Attend Event Flow', () => {
+describe("User Attend Event Flow", () => {
   beforeEach(() => {
     // Intercept backend login endpoints to seamlessly simulate a logged-in user
-    cy.intercept('POST', 'http://localhost:5000/api/auth/login', {
+    cy.intercept("POST", "http://localhost:5000/api/auth/login", {
       statusCode: 200,
       body: {
-        message: 'Login successful',
+        message: "Login successful",
         user_id: 777,
-        roles: ['volunteer']
-      }
-    }).as('loginRequest');
+        roles: ["volunteer"],
+      },
+    }).as("loginRequest");
 
-    cy.intercept('GET', '**/api/users/profile/777', {
+    cy.intercept("GET", "**/api/users/profile/777", {
       statusCode: 200,
       body: {
         user_id: 777,
-        first_name: 'Test',
-        last_name: 'User',
-        email: 'user@example.com'
-      }
-    }).as('profileRequest');
+        first_name: "Test",
+        last_name: "User",
+        email: "user@example.com",
+      },
+    }).as("profileRequest");
 
     // Intercept the events endpoint to predictably serve one Event
-    cy.intercept('GET', '**/api/events', {
+    cy.intercept("GET", "**/api/events", {
       statusCode: 200,
       body: [
         {
@@ -35,70 +35,61 @@ describe('User Attend Event Flow', () => {
           provider_name: "Education Alliance",
           description: "A free seminar open to the public!",
           street_address: "123 Main St",
-          zip: "30303"
-        }
-      ]
-    }).as('getEvents');
+          zip: "30303",
+        },
+      ],
+    }).as("getEvents");
 
-    // Mocks for RSVP functionality
-    cy.intercept('GET', '**/api/events/88/rsvp/777', {
+    // Mock for the attend endpoint
+    cy.intercept("POST", "**/api/events/88/attend", {
       statusCode: 200,
-      body: { rsvp: { status: null } }
-    }).as('getRsvpStatus');
-
-    cy.intercept('POST', '**/api/events/88/rsvp', {
-      statusCode: 200,
-      body: { message: "RSVP updated successfully" }
-    }).as('postRsvp');
+      body: { message: "Attendance recorded" },
+    }).as("postAttend");
   });
 
-  it('allows a logged-in user to view an event and mark themselves as attending', () => {
+  it("allows a logged-in user to view an event and mark themselves as attending", () => {
     // 1. Visit Login Page
-    cy.visit('/login');
+    cy.visit("/login");
 
     // 2. Fill out the authentication form
-    cy.get('input[name="username"]').type('test_user');
-    cy.get('input[name="password"]').type('Password123!');
-    cy.get('select').select('volunteer'); // Select 'Volunteer' role
-    cy.get('button.btn-gold').contains('Login').click({ force: true });
+    cy.get('input[name="username"]').type("test_user");
+    cy.get('input[name="password"]').type("Password123!");
+    cy.get("select").select("volunteer"); // Select 'Volunteer' role
+    cy.get("button.btn-gold").contains("Login").click({ force: true });
 
     // Verify login network requests fired
-    cy.wait('@loginRequest');
-    cy.wait('@profileRequest');
+    cy.wait("@loginRequest");
+    cy.wait("@profileRequest");
 
     // We should be redirected automatically
-    cy.url().should('include', '/volunteer');
+    cy.url().should("include", "/volunteer");
 
     // 3. Click the header logo to go to the Home page
     cy.get('.navbar-brand img[alt="Allies Connect logo"]').click();
-    cy.url().should('eq', Cypress.config().baseUrl + '/');
+    cy.url().should("eq", Cypress.config().baseUrl + "/");
 
     // 4. Click the "Events" button on the Home page
-    cy.contains('.btn-gold', 'Events').click();
-    cy.url().should('include', '/events');
-    cy.wait('@getEvents');
+    cy.contains(".btn-gold", "Events").click();
+    cy.url().should("include", "/events");
+    cy.wait("@getEvents");
 
     // 5. Find our mocked event on the page and click it to open the Event Details Modal
-    cy.contains('Public Education Seminar').should('be.visible').click();
+    cy.contains("Public Education Seminar").should("be.visible").click();
 
     // 6. Assert the modal opens and contains the "Attend Event" button
-    cy.get('.modal').should('be.visible');
-    cy.wait('@getRsvpStatus');
-    cy.get('.modal').contains('Education Alliance');
-    
-    // 7. Click the "Attend Event" button
-    cy.get('.modal').contains('Attend Event', { matchCase: false }).click();
-    cy.wait('@postRsvp');
+    cy.get(".modal").should("be.visible");
+    cy.get(".modal").contains("Education Alliance");
 
-    // 8. Assert that the button label changes to indicate attendance
-    // Use flexible matching as requested (checking for keywords "Attending" and "Cancel RSVP")
-    // The implementation uses: ✓ Attending — Cancel RSVP
-    cy.get('.modal').within(() => {
-        cy.get('button').contains('Attending', { matchCase: false }).should('be.visible');
-        cy.get('button').contains('Cancel RSVP', { matchCase: false }).should('be.visible');
+    // 7. Click the "Attend Event" button
+    cy.get(".modal").contains("Attend Event", { matchCase: false }).click();
+    cy.wait("@postAttend");
+
+    // 8. Assert that the button changes to a disabled "✓ Attending" confirmation
+    cy.get(".modal").within(() => {
+      cy.get("button")
+        .contains("Attending", { matchCase: false })
+        .should("be.visible")
+        .and("be.disabled");
     });
   });
-
-
 });
-
