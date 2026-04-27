@@ -93,6 +93,7 @@ function ForgotPassword() {
                       <Form.Control
                         type="email"
                         placeholder="Enter your email"
+                        autoComplete="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                       />
