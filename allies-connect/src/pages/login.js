@@ -75,6 +75,7 @@ function Login({ setUser, setRole }) {
                   value={username}
                   type="text"
                   placeholder="Enter username"
+                  autocComplete="username"
                   onChange={(e) => setUsername(e.target.value)}
                 />
               </Col>
@@ -89,6 +90,7 @@ function Login({ setUser, setRole }) {
                   value={password}
                   type="password"
                   placeholder="Enter password"
+                  autoComplete="current-password"
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </Col>
