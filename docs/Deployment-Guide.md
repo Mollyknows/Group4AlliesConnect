@@ -61,6 +61,14 @@ sudo npm install -g pm2
     DB_PASSWORD={{database login password}}  
     DB_NAME={{database name}}  
     REACT_APP_API_URL=
+
+    GOOGLE_MAPS_API_KEY={{API Key for Google Maps integration}}
+
+    SMTP_HOST=smtp.gmail.com
+    SMTP_PORT=587
+    SMTP_USER={{Email address that will be used for the email service}}
+    SMTP_PASS={{Email password for the SMTP service. For google this is a secret key that can be found on the account settings page.}}
+    SMTP_FROM=Allies Connect <{{Email address that the emails should be coming from}}>
     ```   
 
     **Note:** The `REACT_APP_API_URL` value is intentionally empty; if you were running this on a local machine, you would provide a URL.
