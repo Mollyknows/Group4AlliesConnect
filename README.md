@@ -2,6 +2,8 @@
 
 Allies Connect is a mobile-first web platform designed to connect Georgia residents with community resources, nonprofit services, events, and volunteer opportunities through a single, centralized system.
 
+*GitHub Copilot has been used to provide coding assistance with this project, as well as for writing unit tests and some documentation.*  
+
 ## Overview
 
 Allies Connect addresses a major problem in community outreach: critical information about food assistance, housing support, nonprofit events, and volunteer opportunities is often scattered across websites, social media, flyers, and word of mouth.
