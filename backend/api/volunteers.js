@@ -1,7 +1,7 @@
 const { logAudit, logEmail } = require("../utils/logging");
 const { requireRole } = require("../middleware/permissions");
 const { rateLimit } = require("../middleware/rateLimit");
-const { sendVolunteerScheduledEmail } = require("../utils/email");
+const { sendVolunteerScheduledEmail, sendVolunteerApprovedEmail, sendVolunteerDeniedEmail } = require("../utils/email");
 
 module.exports = function (app, pool) {
   // GET /api/volunteer-opportunities
@@ -1314,6 +1314,29 @@ module.exports = function (app, pool) {
           "VolunteerResourceConnection",
           connectionId,
         );
+        // Send approval email to volunteer
+        try {
+          const [volRows] = await pool.promise().query(
+            `SELECT u.email, up.first_name, r.name AS resource_name, sp.name AS provider_name
+             FROM VolunteerResourceConnection vrc
+             JOIN \`User\` u ON u.user_id = vrc.user_id
+             JOIN UserProfile up ON up.user_id = vrc.user_id
+             JOIN Resource r ON r.resource_id = vrc.resource_id
+             JOIN ServiceProvider sp ON sp.provider_id = r.provider_id
+             WHERE vrc.connection_id = ?`,
+            [connectionId],
+          );
+          if (volRows.length > 0) {
+            await sendVolunteerApprovedEmail({
+              to: volRows[0].email,
+              firstName: volRows[0].first_name,
+              resourceName: volRows[0].resource_name,
+              providerName: volRows[0].provider_name,
+            });
+          }
+        } catch (emailErr) {
+          console.error("Failed to send volunteer approval email:", emailErr);
+        }
         res.json({ connection_id: Number(connectionId), approved: true });
       } catch (err) {
         console.error("Error approving volunteer:", err);
@@ -1331,6 +1354,7 @@ module.exports = function (app, pool) {
     async (req, res) => {
       try {
         const connectionId = req.params.id;
+        const { denial_reason } = req.body;
         await pool
           .promise()
           .query(
@@ -1344,6 +1368,30 @@ module.exports = function (app, pool) {
           "VolunteerResourceConnection",
           connectionId,
         );
+        // Send denial email to volunteer
+        try {
+          const [volRows] = await pool.promise().query(
+            `SELECT u.email, up.first_name, r.name AS resource_name, sp.name AS provider_name
+             FROM VolunteerResourceConnection vrc
+             JOIN \`User\` u ON u.user_id = vrc.user_id
+             JOIN UserProfile up ON up.user_id = vrc.user_id
+             JOIN Resource r ON r.resource_id = vrc.resource_id
+             JOIN ServiceProvider sp ON sp.provider_id = r.provider_id
+             WHERE vrc.connection_id = ?`,
+            [connectionId],
+          );
+          if (volRows.length > 0) {
+            await sendVolunteerDeniedEmail({
+              to: volRows[0].email,
+              firstName: volRows[0].first_name,
+              resourceName: volRows[0].resource_name,
+              providerName: volRows[0].provider_name,
+              reason: denial_reason,
+            });
+          }
+        } catch (emailErr) {
+          console.error("Failed to send volunteer denial email:", emailErr);
+        }
         res.json({ connection_id: Number(connectionId), denied: true });
       } catch (err) {
         console.error("Error denying volunteer:", err);

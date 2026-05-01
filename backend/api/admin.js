@@ -3,7 +3,11 @@ const crypto = require("crypto");
 const { logAudit } = require("../utils/logging");
 const { requireRole } = require("../middleware/permissions");
 const { rateLimit } = require("../middleware/rateLimit");
-const { sendEmail } = require("../utils/email");
+const {
+  sendEmail,
+  sendOrgApprovedEmail,
+  sendOrgDeniedEmail,
+} = require("../utils/email");
 const { saltRounds, getFrontendUrl } = require("../utils/config");
 const {
   isValidEmailFormat,
@@ -137,9 +141,19 @@ module.exports = function (app, pool) {
     requireRole(pool, "admin"),
     async (req, res) => {
       try {
-        const [rows] = await pool
-          .promise()
-          .query("SELECT * FROM ServiceProvider WHERE status = 'pending'");
+        const [rows] = await pool.promise().query(
+          `SELECT sp.*,
+             u.email    AS registrant_email,
+             up.first_name AS registrant_first_name,
+             up.last_name  AS registrant_last_name
+           FROM ServiceProvider sp
+           LEFT JOIN ServiceProviderUser spu ON spu.provider_id = sp.provider_id
+           LEFT JOIN \`User\` u ON u.user_id = spu.user_id
+           LEFT JOIN UserProfile up ON up.user_id = spu.user_id
+           WHERE sp.status = 'pending'
+           GROUP BY sp.provider_id
+           ORDER BY sp.provider_id ASC`,
+        );
 
         res.json(rows);
       } catch (err) {
@@ -248,6 +262,19 @@ module.exports = function (app, pool) {
       const providerId = req.params.id;
 
       try {
+        // Fetch provider + registrant contact before updating
+        const [spRows] = await pool.promise().query(
+          `SELECT sp.name,
+             u.email    AS registrant_email,
+             up.first_name
+           FROM ServiceProvider sp
+           LEFT JOIN ServiceProviderUser spu ON spu.provider_id = sp.provider_id
+           LEFT JOIN \`User\` u ON u.user_id = spu.user_id
+           LEFT JOIN UserProfile up ON up.user_id = spu.user_id
+           WHERE sp.provider_id = ? LIMIT 1`,
+          [providerId],
+        );
+
         await pool
           .promise()
           .query(
@@ -257,16 +284,88 @@ module.exports = function (app, pool) {
 
         await logAudit(
           pool,
-          1,
+          req.currentUser?.user_id || 1,
           "APPROVE_PROVIDER",
           "ServiceProvider",
           providerId,
         );
 
+        // Send approval email
+        if (spRows.length > 0 && spRows[0].registrant_email) {
+          try {
+            await sendOrgApprovedEmail({
+              to: spRows[0].registrant_email,
+              orgName: spRows[0].name,
+              firstName: spRows[0].first_name,
+            });
+          } catch (emailErr) {
+            console.error("Failed to send org approval email:", emailErr);
+          }
+        }
+
         res.json({ message: "Provider approved" });
       } catch (err) {
         console.error("Error approving provider:", err);
         res.status(500).json({ error: "Failed to approve provider" });
+      }
+    },
+  );
+
+  // PATCH /api/admin/providers/:id/deny
+  // Admin denies a pending provider with an optional reason.
+  app.patch(
+    "/api/admin/providers/:id/deny",
+    rateLimit(),
+    requireRole(pool, "admin"),
+    async (req, res) => {
+      const providerId = req.params.id;
+      const { denial_reason } = req.body;
+
+      try {
+        const [spRows] = await pool.promise().query(
+          `SELECT sp.name,
+             u.email    AS registrant_email,
+             up.first_name
+           FROM ServiceProvider sp
+           LEFT JOIN ServiceProviderUser spu ON spu.provider_id = sp.provider_id
+           LEFT JOIN \`User\` u ON u.user_id = spu.user_id
+           LEFT JOIN UserProfile up ON up.user_id = spu.user_id
+           WHERE sp.provider_id = ? LIMIT 1`,
+          [providerId],
+        );
+
+        await pool
+          .promise()
+          .query(
+            "UPDATE ServiceProvider SET status = 'suspended', denial_reason = ? WHERE provider_id = ?",
+            [denial_reason || null, providerId],
+          );
+
+        await logAudit(
+          pool,
+          req.currentUser?.user_id || 1,
+          "DENY_PROVIDER",
+          "ServiceProvider",
+          providerId,
+        );
+
+        if (spRows.length > 0 && spRows[0].registrant_email) {
+          try {
+            await sendOrgDeniedEmail({
+              to: spRows[0].registrant_email,
+              orgName: spRows[0].name,
+              firstName: spRows[0].first_name,
+              reason: denial_reason,
+            });
+          } catch (emailErr) {
+            console.error("Failed to send org denial email:", emailErr);
+          }
+        }
+
+        res.json({ message: "Provider denied" });
+      } catch (err) {
+        console.error("Error denying provider:", err);
+        res.status(500).json({ error: "Failed to deny provider" });
       }
     },
   );
@@ -475,9 +574,12 @@ module.exports = function (app, pool) {
           password,
           first_name,
           last_name,
-          phone_number,
+          phone_number: rawPhone,
           zip_code,
         } = req.body;
+        const phone_number = rawPhone
+          ? String(rawPhone).replace(/\D/g, "")
+          : rawPhone;
 
         if (
           !token ||

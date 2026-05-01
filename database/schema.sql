@@ -103,6 +103,8 @@ CREATE TABLE ServiceProvider (
   accessibility TEXT NULL,
   logo_url VARCHAR(255) NULL,
   status ENUM('pending','active','suspended') NOT NULL DEFAULT 'pending',
+  application_notes TEXT NULL,
+  denial_reason TEXT NULL,
   PRIMARY KEY (provider_id),
   UNIQUE KEY uq_provider_ein (ein),
   CONSTRAINT fk_provider_location

@@ -11,6 +11,7 @@ import {
   Tabs,
 } from "react-bootstrap";
 import { Helmet } from "react-helmet";
+import { useNavigate } from "react-router-dom";
 import "../App.css";
 import { API_URL } from "../config";
 import {
@@ -28,6 +29,7 @@ import {
 
 function Register() {
   const user = JSON.parse(localStorage.getItem("user"));
+  const navigate = useNavigate();
   // Volunteer form state
   const [volFormData, setVolFormData] = useState({
     username: "",
@@ -234,7 +236,7 @@ function Register() {
           password: volFormData.password,
           first_name: volFormData.firstName,
           last_name: volFormData.lastName,
-          phone: volFormData.phone,
+          phone: volFormData.phone.replace(/\D/g, ""),
           zip_code: volFormData.zip,
           role: "volunteer",
         }),
@@ -339,7 +341,7 @@ function Register() {
           email: orgFormData.email,
           password: orgFormData.password,
           organization_name: orgFormData.name,
-          phone_number: orgFormData.phone,
+          phone_number: orgFormData.phone.replace(/\D/g, ""),
           first_name: orgFormData.firstName,
           last_name: orgFormData.lastName,
           zip_code: orgFormData.zip,
@@ -355,23 +357,12 @@ function Register() {
         return;
       }
 
-      alert("Registration successful! You can now log in.");
-      // Reset form
-      setOrgFormData({
-        username: "",
-        password: "",
-        confirmPassword: "",
-        email: "",
-        firstName: "",
-        lastName: "",
-        name: "",
-        phone: "",
-        zip: "",
-        ein: "",
+      alert(
+        "Registration successful! Please complete your application on the next page.",
+      );
+      navigate("/provider-application", {
+        state: { provider_id: data.provider_id },
       });
-      setEinVerified(false);
-      setEinOrgData(null);
-      setEinError("");
     } catch (err) {
       console.error("Error registering organization:", err);
       alert("An error occurred during registration");
@@ -390,7 +381,9 @@ function Register() {
 
   return (
     <>
-      <Helmet><title>Register | Allies Connect</title></Helmet>
+      <Helmet>
+        <title>Register | Allies Connect</title>
+      </Helmet>
       <Container className="register-container">
         <div className="text-container mb-5">
           <h1>Create Your Account!</h1>
@@ -424,8 +417,8 @@ function Register() {
                         }
                       />
                       <Form.Control.Feedback type="invalid">
-                        Username must be 3-50 characters and contain only letters,
-                        numbers, underscores, and hyphens (no spaces)
+                        Username must be 3-50 characters and contain only
+                        letters, numbers, underscores, and hyphens (no spaces)
                       </Form.Control.Feedback>
                     </Form.Group>
                   </Col>
@@ -451,9 +444,11 @@ function Register() {
                         }
                       />
                       <Form.Control.Feedback type="invalid">
-                        {getPasswordErrors(volFormData.password).map((err, i) => (
-                          <div key={i}>{err}</div>
-                        ))}
+                        {getPasswordErrors(volFormData.password).map(
+                          (err, i) => (
+                            <div key={i}>{err}</div>
+                          ),
+                        )}
                       </Form.Control.Feedback>
                     </Form.Group>
                   </Col>
@@ -627,8 +622,8 @@ function Register() {
                         }
                       />
                       <Form.Control.Feedback type="invalid">
-                        Username must be 3-50 characters and contain only letters,
-                        numbers, underscores, and hyphens (no spaces)
+                        Username must be 3-50 characters and contain only
+                        letters, numbers, underscores, and hyphens (no spaces)
                       </Form.Control.Feedback>
                     </Form.Group>
                   </Col>
@@ -654,9 +649,11 @@ function Register() {
                         }
                       />
                       <Form.Control.Feedback type="invalid">
-                        {getPasswordErrors(orgFormData.password).map((err, i) => (
-                          <div key={i}>{err}</div>
-                        ))}
+                        {getPasswordErrors(orgFormData.password).map(
+                          (err, i) => (
+                            <div key={i}>{err}</div>
+                          ),
+                        )}
                       </Form.Control.Feedback>
                     </Form.Group>
                   </Col>
@@ -818,7 +815,10 @@ function Register() {
                     backgroundColor: "#f9f9f9",
                   }}
                 >
-                  <h5 className="text-center mb-3" style={{ fontWeight: "bold" }}>
+                  <h5
+                    className="text-center mb-3"
+                    style={{ fontWeight: "bold" }}
+                  >
                     EIN Verification
                   </h5>
                   <Row className="text-start mb-3">

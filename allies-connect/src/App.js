@@ -4,6 +4,7 @@ import { useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
 import AuthRoute from "./components/AuthRoute";
+import Footer from "./components/Footer";
 import MyNavbar from "./components/navbar";
 import AdminInviteRegister from "./pages/adminInviteRegister";
 import Admin from "./pages/adminPage";
@@ -14,10 +15,10 @@ import InviteRegister from "./pages/inviteRegister";
 import Login from "./pages/login";
 import Maps from "./pages/maps";
 import Provider from "./pages/provider";
+import ProviderApplication from "./pages/providerApplication";
 import Register from "./pages/register";
 import ResetPassword from "./pages/resetPassword";
 import Volunteer from "./pages/volunteer";
-import Footer from "./components/Footer";
 
 function App() {
   const [user, setUser] = useState(() => {
@@ -75,6 +76,10 @@ function App() {
                 />
               </AuthRoute>
             }
+          />
+          <Route
+            path="/provider-application"
+            element={<ProviderApplication />}
           />
           <Route
             path="/admin"
