@@ -204,6 +204,30 @@ module.exports = function (app, pool) {
     },
   );
 
+  // PUT /api/organizations/:id/application-notes
+  // Saves supplementary application notes submitted after registration (no auth required
+  // since the provider has not yet been approved and cannot log in).
+  app.put(
+    "/api/organizations/:id/application-notes",
+    rateLimit(),
+    async (req, res) => {
+      try {
+        const providerId = req.params.id;
+        const { application_notes } = req.body;
+        await pool
+          .promise()
+          .query(
+            "UPDATE ServiceProvider SET application_notes = ? WHERE provider_id = ?",
+            [application_notes || null, providerId],
+          );
+        res.json({ message: "Application notes saved" });
+      } catch (err) {
+        console.error("Error saving application notes:", err);
+        res.status(500).json({ error: "Failed to save application notes" });
+      }
+    },
+  );
+
   // GET /api/organizations/profile/:id
   // Returns organization profile details
   app.get("/api/organizations/profile/:id", async (req, res) => {
@@ -260,18 +284,24 @@ module.exports = function (app, pool) {
         const providerId = req.params.id;
         const {
           common_name,
-          phone_number,
+          phone_number: rawPhone,
           website,
           organization_type,
           mission,
           contact_name,
           contact_email,
-          contact_phone,
+          contact_phone: rawContactPhone,
           operating_hours,
           languages_spoken,
           accessibility,
           logo_url,
         } = req.body;
+        const phone_number = rawPhone
+          ? String(rawPhone).replace(/\D/g, "")
+          : rawPhone;
+        const contact_phone = rawContactPhone
+          ? String(rawContactPhone).replace(/\D/g, "")
+          : rawContactPhone;
 
         const query = `
         UPDATE ServiceProvider
@@ -487,9 +517,12 @@ module.exports = function (app, pool) {
           password,
           first_name,
           last_name,
-          phone_number,
+          phone_number: rawPhone,
           zip_code,
         } = req.body;
+        const phone_number = rawPhone
+          ? String(rawPhone).replace(/\D/g, "")
+          : rawPhone;
 
         if (
           !token ||

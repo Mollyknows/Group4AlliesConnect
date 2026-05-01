@@ -1,8 +1,8 @@
 import axios from "axios";
 import { useState } from "react";
 import { Button, Col, Container, Form, Row } from "react-bootstrap";
-import { Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
+import { Link, useNavigate } from "react-router-dom";
 import "../App.css";
 import { API_URL } from "../config";
 
@@ -48,13 +48,22 @@ function Login({ setUser, setRole }) {
       }
     } catch (error) {
       console.error("Login failed:", error);
-      setError("Invalid username, password, or role. Please try again.");
+      if (
+        error.response?.status === 403 &&
+        error.response?.data?.error === "PROVIDER_PENDING"
+      ) {
+        setError(error.response.data.message);
+      } else {
+        setError("Invalid username, password, or role. Please try again.");
+      }
     }
   };
 
   return (
     <>
-      <Helmet><title>Login | Allies Connect</title></Helmet>
+      <Helmet>
+        <title>Login | Allies Connect</title>
+      </Helmet>
       <Container className="login-container">
         <div className="text-container mb-5">
           <h1>Welcome Back!</h1>

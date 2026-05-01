@@ -35,13 +35,20 @@ function EditableField({
 
 function PendingOrgsContent({ data, onSave }) {
   const [form, setForm] = useState({});
+  const [showDenyForm, setShowDenyForm] = useState(false);
+  const [denialReason, setDenialReason] = useState("");
 
   useEffect(() => {
     setForm(data || {});
   }, [data]);
 
   const handleApprove = async () => {
-    if (!window.confirm("Are you sure you want to approve this organization? This action cannot be undone.")) return;
+    if (
+      !window.confirm(
+        "Are you sure you want to approve this organization? This action cannot be undone.",
+      )
+    )
+      return;
     try {
       await axios.patch(
         `${API_URL}/api/admin/providers/${form.provider_id}/approve`,
@@ -56,40 +63,107 @@ function PendingOrgsContent({ data, onSave }) {
   };
 
   const handleReject = async () => {
-    if (!window.confirm("Are you sure you want to reject this organization? This action cannot be undone.")) return;
+    if (!denialReason.trim()) {
+      alert("Please provide a reason for denying this organization.");
+      return;
+    }
+    if (
+      !window.confirm(
+        "Are you sure you want to deny this organization? This action cannot be undone.",
+      )
+    )
+      return;
     try {
       await axios.patch(
-        `${API_URL}/api/admin/providers/${form.provider_id}/status`,
-        { status: "suspended" },
+        `${API_URL}/api/admin/providers/${form.provider_id}/deny`,
+        { denial_reason: denialReason },
         { headers: getAuthHeaders() },
       );
-      alert("Organization rejected.");
+      alert("Organization denied. The applicant will be notified by email.");
       onSave();
     } catch (error) {
-      alert("Error rejecting organization.");
+      alert("Error denying organization.");
     }
   };
 
   return (
     <>
       <EditableField label="Organization Name" value={form.name} readOnly />
-      <EditableField label="Email" value={form.email} readOnly />
       <EditableField label="EIN" value={form.ein} readOnly />
       <EditableField label="Phone" value={form.phone_number} readOnly />
+      <EditableField
+        label="Registrant Email"
+        value={form.registrant_email}
+        readOnly
+      />
+      <EditableField
+        label="Registrant Name"
+        value={
+          [form.registrant_first_name, form.registrant_last_name]
+            .filter(Boolean)
+            .join(" ") || null
+        }
+        readOnly
+      />
       <EditableField
         label="Date Applied"
         value={form.application_date}
         readOnly
       />
       <EditableField label="Status" value={form.status} readOnly />
+      {form.application_notes && (
+        <Row className="text-start mb-3">
+          <Col md={4} className="d-flex align-items-start pt-1">
+            <h5>Application Notes:</h5>
+          </Col>
+          <Col md={8}>
+            <p className="mb-0 pt-1" style={{ whiteSpace: "pre-wrap" }}>
+              {form.application_notes}
+            </p>
+          </Col>
+        </Row>
+      )}
+      {showDenyForm && (
+        <Row className="text-start mb-3">
+          <Col md={4} className="d-flex align-items-start pt-1">
+            <h5>Denial Reason:</h5>
+          </Col>
+          <Col md={8}>
+            <textarea
+              className="form-control"
+              rows={3}
+              placeholder="Provide a reason for denying this organization (will be emailed to the applicant)..."
+              value={denialReason}
+              onChange={(e) => setDenialReason(e.target.value)}
+            />
+          </Col>
+        </Row>
+      )}
       <Row className="justify-content-end mt-3">
-        <Col md={5}>
-          <Button className="btn-green me-2" onClick={handleApprove}>
+        <Col md={6} className="d-flex gap-2 justify-content-end">
+          <Button className="btn-green" onClick={handleApprove}>
             Approve
           </Button>
-          <Button className="btn-red" onClick={handleReject}>
-            Reject
-          </Button>
+          {showDenyForm ? (
+            <>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setShowDenyForm(false);
+                  setDenialReason("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button className="btn-red" onClick={handleReject}>
+                Confirm Deny
+              </Button>
+            </>
+          ) : (
+            <Button className="btn-red" onClick={() => setShowDenyForm(true)}>
+              Deny
+            </Button>
+          )}
         </Col>
       </Row>
     </>

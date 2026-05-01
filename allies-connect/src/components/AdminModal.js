@@ -54,7 +54,7 @@ function PendingOrgsContent({ onViewDetails }) {
   const { sortedData, handleSort, sortSymbol, searchQuery, setSearchQuery } =
     useTableDataProcessing(pendingOrgs, [
       "name",
-      "email",
+      "registrant_email",
       "application_date",
       "ein",
     ]);
@@ -78,7 +78,12 @@ function PendingOrgsContent({ onViewDetails }) {
   };
 
   const handleApprove = async (orgId) => {
-    if (!window.confirm("Are you sure you want to approve this organization? This action cannot be undone.")) return;
+    if (
+      !window.confirm(
+        "Are you sure you want to approve this organization? This action cannot be undone.",
+      )
+    )
+      return;
     try {
       await axios.patch(
         `${API_URL}/api/admin/providers/${orgId}/approve`,
@@ -94,18 +99,31 @@ function PendingOrgsContent({ onViewDetails }) {
   };
 
   const handleReject = async (orgId) => {
-    if (!window.confirm("Are you sure you want to reject this organization? This action cannot be undone.")) return;
+    const reason = window.prompt(
+      "Please provide a reason for denying this organization (will be emailed to the applicant):",
+    );
+    if (reason === null) return; // cancelled
+    if (!reason.trim()) {
+      alert("A denial reason is required.");
+      return;
+    }
+    if (
+      !window.confirm(
+        "Are you sure you want to deny this organization? This action cannot be undone.",
+      )
+    )
+      return;
     try {
       await axios.patch(
-        `${API_URL}/api/admin/providers/${orgId}/status`,
-        { status: "suspended" },
+        `${API_URL}/api/admin/providers/${orgId}/deny`,
+        { denial_reason: reason },
         { headers: getAuthHeaders() },
       );
-      alert("Organization rejected successfully.");
+      alert("Organization denied. The applicant will be notified by email.");
       fetchPendingOrgs();
     } catch (error) {
-      console.error("Error rejecting organization:", error);
-      alert("Error rejecting organization.");
+      console.error("Error denying organization:", error);
+      alert("Error denying organization.");
     }
   };
 
@@ -124,22 +142,29 @@ function PendingOrgsContent({ onViewDetails }) {
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("name")}
-              aria-label="Sort by organization name">
+              aria-label="Sort by organization name"
+            >
               Organization {sortSymbol("name")}
             </th>
             <th
               style={{ cursor: "pointer" }}
-              onClick={() => handleSort("email")}
-              aria-label="Sort by email">
-              Email {sortSymbol("email")}
+              onClick={() => handleSort("registrant_email")}
+              aria-label="Sort by email"
+            >
+              Registrant Email {sortSymbol("registrant_email")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("application_date")}
-              aria-label="Sort by application date">
+              aria-label="Sort by application date"
+            >
               Application Date {sortSymbol("application_date")}
             </th>
-            <th style={{ cursor: "pointer" }} onClick={() => handleSort("ein")} aria-label="Sort by EIN">
+            <th
+              style={{ cursor: "pointer" }}
+              onClick={() => handleSort("ein")}
+              aria-label="Sort by EIN"
+            >
               EIN {sortSymbol("ein")}
             </th>
             <th>Action</th>
@@ -149,7 +174,7 @@ function PendingOrgsContent({ onViewDetails }) {
           {sortedData.map((org) => (
             <tr key={org.provider_id} className="text-center align-middle">
               <td>{org.name || "N/A"}</td>
-              <td>{org.email || "N/A"}</td>
+              <td>{org.registrant_email || "N/A"}</td>
               <td>{org.application_date || "N/A"}</td>
               <td>{org.ein || "N/A"}</td>
               <td>
@@ -169,7 +194,7 @@ function PendingOrgsContent({ onViewDetails }) {
                   className="btn-red"
                   onClick={() => handleReject(org.provider_id)}
                 >
-                  Reject
+                  Deny
                 </button>
               </td>
             </tr>
@@ -441,19 +466,22 @@ function EditAccountsContent({ onViewDetails }) {
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("name")}
-              aria-label="Sort by organization name">
+              aria-label="Sort by organization name"
+            >
               Name {sortSymbol("name")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("email")}
-              aria-label="Sort by email">
+              aria-label="Sort by email"
+            >
               Email {sortSymbol("email")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("roles")}
-              aria-label="Sort by roles">
+              aria-label="Sort by roles"
+            >
               Roles {sortSymbol("roles")}
             </th>
             <th>Details</th>
@@ -523,22 +551,29 @@ function ManageResourcesContent({ onViewDetails }) {
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("name")}
-              aria-label="Sort by organization name">
+              aria-label="Sort by organization name"
+            >
               Name {sortSymbol("name")}
             </th>
-            <th style={{ cursor: "pointer" }} onClick={() => handleSort("zip")} aria-label="Sort by zip code">
+            <th
+              style={{ cursor: "pointer" }}
+              onClick={() => handleSort("zip")}
+              aria-label="Sort by zip code"
+            >
               Zip Code {sortSymbol("zip")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("provider_name")}
-              aria-label="Sort by organization">
+              aria-label="Sort by organization"
+            >
               Organization {sortSymbol("provider_name")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("category_name")}
-              aria-label="Sort by category">
+              aria-label="Sort by category"
+            >
               Category {sortSymbol("category_name")}
             </th>
             <th>Details</th>
@@ -628,28 +663,36 @@ function ManageEventsContent({ onViewDetails }) {
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("title")}
-              aria-label="Sort by title">
+              aria-label="Sort by title"
+            >
               Title {sortSymbol("title")}
             </th>
-            <th style={{ cursor: "pointer" }} onClick={() => handleSort("zip")} aria-label="Sort by zip code">
+            <th
+              style={{ cursor: "pointer" }}
+              onClick={() => handleSort("zip")}
+              aria-label="Sort by zip code"
+            >
               Zip Code {sortSymbol("zip")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("provider_name")}
-              aria-label="Sort by organization">
+              aria-label="Sort by organization"
+            >
               Organization {sortSymbol("provider_name")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("start_datetime")}
-              aria-label="Sort by start time">
+              aria-label="Sort by start time"
+            >
               Start Time {sortSymbol("start_datetime")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("category_name")}
-              aria-label="Sort by category">
+              aria-label="Sort by category"
+            >
               Category {sortSymbol("category_name")}
             </th>
             <th>Details</th>
@@ -725,31 +768,36 @@ function ManageVolunteersContent({ onViewDetails }) {
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("title")}
-              aria-label="Sort by title">
+              aria-label="Sort by title"
+            >
               Title {sortSymbol("title")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("provider_name")}
-              aria-label="Sort by organization">
+              aria-label="Sort by organization"
+            >
               Provider {sortSymbol("provider_name")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("status")}
-              aria-label="Sort by status">
+              aria-label="Sort by status"
+            >
               Status {sortSymbol("status")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("contact_name")}
-              aria-label="Sort by contact">
+              aria-label="Sort by contact"
+            >
               Contact {sortSymbol("contact_name")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("contact_email")}
-              aria-label="Sort by email">
+              aria-label="Sort by email"
+            >
               Email {sortSymbol("contact_email")}
             </th>
             <th>Details</th>
@@ -829,31 +877,36 @@ function ReviewLogDataContent({ onViewDetails }) {
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("log_id")}
-              aria-label="Sort by log ID">
+              aria-label="Sort by log ID"
+            >
               Log ID {sortSymbol("log_id")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("action")}
-              aria-label="Sort by action">
+              aria-label="Sort by action"
+            >
               Action {sortSymbol("action")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("actor_user_id")}
-              aria-label="Sort by actor user ID">
+              aria-label="Sort by actor user ID"
+            >
               Actor User ID {sortSymbol("actor_user_id")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("entity_type")}
-              aria-label="Sort by entity type">
+              aria-label="Sort by entity type"
+            >
               Entity Type {sortSymbol("entity_type")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("occured_at")}
-              aria-label="Sort by date">
+              aria-label="Sort by date"
+            >
               Date {sortSymbol("occured_at")}
             </th>
             <th>Details</th>

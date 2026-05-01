@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Button, Col, Image, Modal, Row } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { API_URL } from "../config";
+import VolunteerApplicationModal from "./VolunteerApplicationModal";
 
 function MapPinDetails({ details }) {
   const navigate = useNavigate();
@@ -12,8 +13,13 @@ function MapPinDetails({ details }) {
 
   const [showStopModal, setShowStopModal] = useState(false);
   const [showEligibilityModal, setShowEligibilityModal] = useState(false);
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [showRescindModal, setShowRescindModal] = useState(false);
   const [activeConnectionId, setActiveConnectionId] = useState(null);
-  const [isRegistered, setIsRegistered] = useState(false);
+  // connectionStatus: null | 'pending' | 'approved' | 'denied'
+  const [connectionStatus, setConnectionStatus] = useState(null);
+  // isActive: whether an approved volunteer is currently active
+  const [isActive, setIsActive] = useState(false);
   const [loading, setLoading] = useState(false);
   const isResource = details?.type === "Resource";
 
@@ -25,12 +31,16 @@ function MapPinDetails({ details }) {
         const res = await axios.get(`${API_URL}/api/resource-connections`, {
           params: { resource_id: details.resource_id, user_id: user.user_id },
         });
-        if (res.data && res.data.active) {
-          setIsRegistered(true);
+        if (res.data) {
           setActiveConnectionId(res.data.connection_id);
+          setConnectionStatus(
+            res.data.status || (res.data.active ? "approved" : null),
+          );
+          setIsActive(!!res.data.active);
         } else {
-          setIsRegistered(false);
           setActiveConnectionId(null);
+          setConnectionStatus(null);
+          setIsActive(false);
         }
       } catch (err) {
         console.error("Error checking resource connection:", err);
@@ -39,33 +49,67 @@ function MapPinDetails({ details }) {
     checkConnection();
   }, [details?.resource_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleVolunteerClick = async () => {
+  // Open application modal (new apply or re-apply after denial)
+  const handleVolunteerClick = () => {
     if (!details?.resource_id || !user?.user_id) return;
 
-    // Already registered → prompt to stop
-    if (isRegistered) {
+    if (connectionStatus === "pending") {
+      // Show rescind option
+      setShowRescindModal(true);
+      return;
+    }
+
+    if (connectionStatus === "approved" && isActive) {
+      // Already volunteering → offer to stop
       setShowStopModal(true);
       return;
     }
 
+    if (connectionStatus === "approved" && !isActive) {
+      // Was approved, toggled off → re-activate without a new application
+      handleReactivate();
+      return;
+    }
+
+    // No connection or denied → open application modal
+    setShowApplicationModal(true);
+  };
+
+  // Submit volunteer application
+  const handleApplicationSubmit = async (applicationText) => {
+    setLoading(true);
+    try {
+      const res = await axios.post(`${API_URL}/api/resource-connections`, {
+        resource_id: details.resource_id,
+        user_id: user.user_id,
+        application_text: applicationText,
+      });
+      setActiveConnectionId(res.data.connection_id);
+      setConnectionStatus("pending");
+      setIsActive(false);
+      setShowApplicationModal(false);
+    } catch (err) {
+      console.error("Error submitting application:", err);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Re-activate an approved-but-inactive connection
+  const handleReactivate = async () => {
+    if (!details?.resource_id || !user?.user_id) return;
     setLoading(true);
     try {
       const res = await axios.post(`${API_URL}/api/resource-connections`, {
         resource_id: details.resource_id,
         user_id: user.user_id,
       });
-
-      if (res.data.already_active) {
-        setActiveConnectionId(res.data.connection_id);
-        setIsRegistered(true);
-        setShowStopModal(true);
-      } else if (res.data.created || res.data.activated) {
-        setActiveConnectionId(res.data.connection_id);
-        setIsRegistered(true);
-        alert("You are now volunteering with this resource!");
-      }
+      setIsActive(true);
+      setConnectionStatus("approved");
+      setActiveConnectionId(res.data.connection_id);
     } catch (err) {
-      console.error("Error connecting to resource:", err);
+      console.error("Error reactivating connection:", err);
       alert("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
@@ -79,13 +123,38 @@ function MapPinDetails({ details }) {
         `${API_URL}/api/resource-connections/${activeConnectionId}/deactivate`,
       );
       setShowStopModal(false);
-      setActiveConnectionId(null);
-      setIsRegistered(false);
-      alert("You have stopped volunteering with this resource.");
+      setIsActive(false);
+      // Keep connectionStatus as 'approved' so they can re-activate without re-applying
     } catch (err) {
       console.error("Error deactivating connection:", err);
       alert("Something went wrong. Please try again.");
     }
+  };
+
+  // Volunteer rescinds their pending application
+  const handleRescindApplication = async () => {
+    if (!activeConnectionId) return;
+    try {
+      await axios.delete(
+        `${API_URL}/api/resource-connections/${activeConnectionId}`,
+      );
+      setActiveConnectionId(null);
+      setConnectionStatus(null);
+      setIsActive(false);
+      setShowRescindModal(false);
+    } catch (err) {
+      console.error("Error rescinding application:", err);
+      alert("Something went wrong. Please try again.");
+    }
+  };
+
+  // Derive button label
+  const volunteerButtonLabel = () => {
+    if (loading) return "Processing…";
+    if (connectionStatus === "pending") return "Application Pending";
+    if (connectionStatus === "approved" && isActive)
+      return "Registered as Volunteer";
+    return "Volunteer With This Resource";
   };
 
   if (!details) return null;
@@ -374,9 +443,13 @@ function MapPinDetails({ details }) {
                 </Button>
               )}
             </div>
-            {isVolunteer && (
+            {isVolunteer && isResource && (
               <Button
-                variant={isRegistered ? "info" : "outline-info"}
+                variant={
+                  connectionStatus === "approved" && isActive
+                    ? "info"
+                    : "outline-info"
+                }
                 disabled={loading}
                 onClick={handleVolunteerClick}
                 style={{
@@ -385,17 +458,55 @@ function MapPinDetails({ details }) {
                   fontSize: "12px",
                   padding: "6px 15px",
                   borderColor: "#0097a7",
-                  color: isRegistered ? "white" : "#0097a7",
-                  backgroundColor: isRegistered ? "#0097a7" : "transparent",
+                  color:
+                    connectionStatus === "approved" && isActive
+                      ? "white"
+                      : "#0097a7",
+                  backgroundColor:
+                    connectionStatus === "approved" && isActive
+                      ? "#0097a7"
+                      : "transparent",
                 }}
               >
-                {loading
-                  ? "Processing…"
-                  : isRegistered
-                    ? "Registered as Volunteer"
-                    : "Volunteer With This Resource"}
+                {volunteerButtonLabel()}
               </Button>
             )}
+
+            {/* Volunteer application modal */}
+            <VolunteerApplicationModal
+              show={showApplicationModal}
+              onHide={() => setShowApplicationModal(false)}
+              promptText={details?.volunteer_application_prompt || ""}
+              resourceName={details?.name || ""}
+              onSubmit={handleApplicationSubmit}
+              loading={loading}
+            />
+
+            {/* Rescind pending application confirmation */}
+            <Modal
+              show={showRescindModal}
+              onHide={() => setShowRescindModal(false)}
+              centered
+            >
+              <Modal.Header closeButton>
+                <Modal.Title>Application Pending</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+                Your application is awaiting review. Would you like to withdraw
+                your application?
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowRescindModal(false)}
+                >
+                  Keep Application
+                </Button>
+                <Button variant="danger" onClick={handleRescindApplication}>
+                  Withdraw Application
+                </Button>
+              </Modal.Footer>
+            </Modal>
 
             {/* Stop-volunteering confirmation modal */}
             <Modal
@@ -404,11 +515,11 @@ function MapPinDetails({ details }) {
               centered
             >
               <Modal.Header closeButton>
-                <Modal.Title>Already Volunteering</Modal.Title>
+                <Modal.Title>Stop Volunteering</Modal.Title>
               </Modal.Header>
               <Modal.Body>
-                You are already volunteering with this resource. Would you like
-                to stop volunteering?
+                Would you like to stop volunteering with this resource? You can
+                re-register at any time without reapplying.
               </Modal.Body>
               <Modal.Footer>
                 <Button

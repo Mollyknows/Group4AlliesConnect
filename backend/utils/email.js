@@ -165,6 +165,93 @@ async function sendOrgInviteEmail({ to, orgName, inviteLink }) {
   });
 }
 
+async function sendOrgApprovedEmail({ to, orgName, firstName }) {
+  const safeName = firstName || "there";
+  const org = orgName || "your organization";
+  return sendEmail({
+    to,
+    subject: "Allies Connect — Your organization has been approved!",
+    text: `Hi ${safeName},\n\nGreat news! ${org} has been approved on Allies Connect. You can now log in and start using the service.\n\n— Allies Connect`,
+    html: `
+      <p>Hi ${safeName},</p>
+      <p>Great news! <strong>${org}</strong> has been approved on Allies Connect.</p>
+      <p>You can now <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/login">log in</a> and start using the service.</p>
+      <br/>
+      <p>— Allies Connect</p>
+    `,
+  });
+}
+
+async function sendOrgDeniedEmail({ to, orgName, firstName, reason }) {
+  const safeName = firstName || "there";
+  const org = orgName || "your organization";
+  const reasonText = reason ? `\n\nReason provided: ${reason}` : "";
+  const reasonHtml = reason ? `<p><strong>Reason:</strong> ${reason}</p>` : "";
+  return sendEmail({
+    to,
+    subject: "Allies Connect — Organization application update",
+    text: `Hi ${safeName},\n\nAfter review, we are unable to approve ${org} on Allies Connect at this time.${reasonText}\n\nIf you have questions, please contact us.\n\n— Allies Connect`,
+    html: `
+      <p>Hi ${safeName},</p>
+      <p>After review, we are unable to approve <strong>${org}</strong> on Allies Connect at this time.</p>
+      ${reasonHtml}
+      <p>If you have questions, please contact us.</p>
+      <br/>
+      <p>— Allies Connect</p>
+    `,
+  });
+}
+
+async function sendVolunteerApprovedEmail({
+  to,
+  firstName,
+  resourceName,
+  providerName,
+}) {
+  const safeName = firstName || "Volunteer";
+  const resource = resourceName || "the resource";
+  const provider = providerName || "the organization";
+  return sendEmail({
+    to,
+    subject: `Allies Connect — Your volunteer application has been approved`,
+    text: `Hi ${safeName},\n\nYour application to volunteer with ${resource} at ${provider} has been approved! You can now log in to Allies Connect to get started.\n\n— Allies Connect`,
+    html: `
+      <p>Hi ${safeName},</p>
+      <p>Your application to volunteer with <strong>${resource}</strong> at <strong>${provider}</strong> has been approved!</p>
+      <p>You can now <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/login">log in</a> to Allies Connect to get started.</p>
+      <br/>
+      <p>— Allies Connect</p>
+    `,
+  });
+}
+
+async function sendVolunteerDeniedEmail({
+  to,
+  firstName,
+  resourceName,
+  providerName,
+  reason,
+}) {
+  const safeName = firstName || "Volunteer";
+  const resource = resourceName || "the resource";
+  const provider = providerName || "the organization";
+  const reasonText = reason ? `\n\nReason: ${reason}` : "";
+  const reasonHtml = reason ? `<p><strong>Reason:</strong> ${reason}</p>` : "";
+  return sendEmail({
+    to,
+    subject: `Allies Connect — Volunteer application update`,
+    text: `Hi ${safeName},\n\nUnfortunately, your application to volunteer with ${resource} at ${provider} was not approved at this time.${reasonText}\n\nYou are welcome to apply to other opportunities on Allies Connect.\n\n— Allies Connect`,
+    html: `
+      <p>Hi ${safeName},</p>
+      <p>Unfortunately, your application to volunteer with <strong>${resource}</strong> at <strong>${provider}</strong> was not approved at this time.</p>
+      ${reasonHtml}
+      <p>You are welcome to apply to other opportunities on Allies Connect.</p>
+      <br/>
+      <p>— Allies Connect</p>
+    `,
+  });
+}
+
 module.exports = {
   sendEmail,
   sendVolunteerWelcomeEmail,
@@ -172,4 +259,8 @@ module.exports = {
   sendEventNextDayReminderEmail,
   sendPasswordResetEmail,
   sendOrgInviteEmail,
+  sendOrgApprovedEmail,
+  sendOrgDeniedEmail,
+  sendVolunteerApprovedEmail,
+  sendVolunteerDeniedEmail,
 };

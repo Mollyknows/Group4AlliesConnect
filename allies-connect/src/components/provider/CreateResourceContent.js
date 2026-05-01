@@ -49,9 +49,20 @@ function CreateResourceContent({ onViewDetails, providerId, userId }) {
     }
   };
 
+  const formatPhone = (value) => {
+    const digits = value.replace(/\D/g, "").slice(0, 10);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "phone") {
+      setFormData((prev) => ({ ...prev, phone: formatPhone(value) }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   // Called when the user selects a Places Autocomplete suggestion
@@ -152,7 +163,7 @@ function CreateResourceContent({ onViewDetails, providerId, userId }) {
       zip: formData.zip,
       hours: JSON.stringify(hours),
       category_ids: selectedCategories.map((c) => c.category_id),
-      phone: formData.phone,
+      phone: formData.phone.replace(/\D/g, ""),
       website: formData.website || null,
       languages: formData.languages || null,
       social_media_links:

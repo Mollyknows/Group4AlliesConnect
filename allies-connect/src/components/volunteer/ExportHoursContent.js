@@ -57,7 +57,8 @@ function ExportHoursContent({ userId }) {
     }
 
     const csvHeaders = [
-      "Resource",
+      "Type",
+      "Resource / Event",
       "Shift Date",
       "Start Time",
       "End Time",
@@ -65,6 +66,7 @@ function ExportHoursContent({ userId }) {
     ];
 
     const csvRows = hours.map((row) => [
+      `"${row.shift_type || ""}"`,
       `"${row.resource_name || row.opportunity_title || ""}"`,
       `"${dayjs(row.shift_date).format("YYYY-MM-DD")}"`,
       `"${dayjs(row.start_datetime).format("h:mm A")}"`,
@@ -103,7 +105,7 @@ function ExportHoursContent({ userId }) {
           handleSearch();
         }}
       >
-        <Row className="mb-3 align-items-end">
+        <Row className="mb-3 align-items-end g-2">
           <Col md={4}>
             <Form.Group>
               <Form.Label>
@@ -113,7 +115,7 @@ function ExportHoursContent({ userId }) {
                 value={selectedResource}
                 onChange={(e) => setSelectedResource(e.target.value)}
               >
-                <option value="">All Resources</option>
+                <option value="">All Resources and Events</option>
                 {resources.map((r) => (
                   <option key={r.resource_id} value={r.resource_id}>
                     {r.name}
@@ -146,8 +148,8 @@ function ExportHoursContent({ userId }) {
               />
             </Form.Group>
           </Col>
-          <Col md={2} className="d-flex gap-2">
-            <button type="submit" className="btn-gold flex-grow-1">
+          <Col md={2} className="d-flex align-items-end">
+            <button type="submit" className="btn-gold w-100">
               Search
             </button>
           </Col>
@@ -187,7 +189,8 @@ function ExportHoursContent({ userId }) {
             >
               <thead>
                 <tr>
-                  <th>Resource</th>
+                  <th>Type</th>
+                  <th>Resource / Event</th>
                   <th>Date</th>
                   <th>Start Time</th>
                   <th>End Time</th>
@@ -197,6 +200,7 @@ function ExportHoursContent({ userId }) {
               <tbody>
                 {hours.map((row, idx) => (
                   <tr key={row.shift_id || idx}>
+                    <td>{row.shift_type || "—"}</td>
                     <td>{row.resource_name || row.opportunity_title || "—"}</td>
                     <td>{dayjs(row.shift_date).format("MMM D, YYYY")}</td>
                     <td>{dayjs(row.start_datetime).format("h:mm A")}</td>

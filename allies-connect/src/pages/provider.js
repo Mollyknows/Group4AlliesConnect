@@ -29,7 +29,9 @@ function Provider({ user, setUser, role, setRole }) {
 
   return (
     <>
-      <Helmet><title>Provider Dashboard | Allies Connect</title></Helmet>
+      <Helmet>
+        <title>Provider Dashboard | Allies Connect</title>
+      </Helmet>
       <Container className="provider-container">
         <div className="text-container mt-5 mb-5">
           <h1>{providerName || "Provider"} Dashboard</h1>
@@ -87,6 +89,14 @@ function Provider({ user, setUser, role, setRole }) {
                 onClick={() => setModalType("volunteerShifts")}
               >
                 Volunteer Shift Management
+              </button>
+            </Col>
+            <Col md={5} className="d-flex mb-2">
+              <button
+                className="btn-white flex-grow-1"
+                onClick={() => setModalType("volunteerApproval")}
+              >
+                Volunteer Approval
               </button>
             </Col>
           </Row>

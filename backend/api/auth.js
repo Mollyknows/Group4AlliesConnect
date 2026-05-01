@@ -27,10 +27,11 @@ module.exports = function (app, pool) {
           password,
           first_name,
           last_name,
-          phone,
+          phone: rawPhone,
           zip_code,
           role,
         } = req.body;
+        const phone = rawPhone ? String(rawPhone).replace(/\D/g, "") : rawPhone;
 
         if (
           !username ||
@@ -197,6 +198,23 @@ module.exports = function (app, pool) {
         );
 
         const roles = roleRows.map((role) => role.role_name);
+
+        // If user is a provider, ensure their organization is approved
+        if (roles.includes("provider")) {
+          const [spRows] = await pool.promise().query(
+            `SELECT sp.status FROM ServiceProvider sp
+             JOIN ServiceProviderUser spu ON spu.provider_id = sp.provider_id
+             WHERE spu.user_id = ? LIMIT 1`,
+            [user.user_id],
+          );
+          if (spRows.length > 0 && spRows[0].status === "pending") {
+            return res.status(403).json({
+              error: "PROVIDER_PENDING",
+              message:
+                "Thank you for your interest in being hosted on Allies Connect. Once your organization has been approved you will receive an email, notifying you that you can start using the service.",
+            });
+          }
+        }
 
         res.json({
           message: "Login successful",
@@ -413,7 +431,8 @@ module.exports = function (app, pool) {
   app.put("/api/users/profile/:id", rateLimit(), async (req, res) => {
     try {
       const userId = req.params.id;
-      const { first_name, last_name, phone, zip_code } = req.body;
+      const { first_name, last_name, phone: rawPhone, zip_code } = req.body;
+      const phone = rawPhone ? String(rawPhone).replace(/\D/g, "") : rawPhone;
 
       await pool.promise().query(
         `UPDATE UserProfile
