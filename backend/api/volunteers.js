@@ -168,36 +168,97 @@ module.exports = function (app, pool) {
   });
 
   // GET /api/users/:id/volunteer-hours/export
+  // :id is the provider's user_id. Returns hours for all approved volunteers
+  // across all resources managed by that provider, calculated from VolunteerShift
+  // start/end times where the volunteer has a VolunteerSignup for the shift.
   app.get("/api/users/:id/volunteer-hours/export", async (req, res) => {
     try {
       const userId = req.params.id;
 
       const [rows] = await pool.promise().query(
         `
+        -- Resource-based shifts for approved volunteers
         SELECT
-          vo.title,
-          sp.name AS provider_name,
+          up.first_name,
+          up.last_name,
+          u.email,
+          r.name        AS resource_name,
+          vo.title      AS opportunity_title,
           vs.start_datetime,
           vs.end_datetime,
-          TIMESTAMPDIFF(MINUTE, vs.start_datetime, vs.end_datetime) / 60 AS hours_worked
-        FROM VolunteerSignup s
-        JOIN VolunteerShift vs ON s.shift_id = vs.shift_id
-        JOIN VolunteerOpportunity vo ON vs.opportunity_id = vo.opportunity_id
-        JOIN ServiceProvider sp ON vo.provider_id = sp.provider_id
-        WHERE s.user_id = ?
-          AND s.status = 'registered'
+          ROUND(TIMESTAMPDIFF(MINUTE, vs.start_datetime, vs.end_datetime) / 60.0, 2)
+            AS hours_worked
+        FROM ServiceProviderUser spu
+        JOIN ServiceProvider sp  ON sp.provider_id  = spu.provider_id
+        JOIN Resource r          ON r.provider_id   = sp.provider_id
+        JOIN VolunteerResourceConnection vrc
+                                 ON vrc.resource_id = r.resource_id
+                                AND vrc.status      = 'approved'
+        JOIN \`User\` u           ON u.user_id       = vrc.user_id
+        JOIN UserProfile up       ON up.user_id      = vrc.user_id
+        JOIN VolunteerOpportunity vo
+                                 ON vo.resource_id  = r.resource_id
+                                AND vo.provider_id  = sp.provider_id
+        JOIN VolunteerShift vs   ON vs.opportunity_id = vo.opportunity_id
+        JOIN VolunteerSignup vsig
+                                 ON vsig.shift_id   = vs.shift_id
+                                AND vsig.user_id    = vrc.user_id
+                                AND vsig.status     = 'registered'
+        WHERE spu.user_id = ?
           AND vs.end_datetime < NOW()
-        ORDER BY vs.start_datetime ASC
+
+        UNION ALL
+
+        -- Event-based shifts for volunteers connected to this provider's resources
+        SELECT
+          up.first_name,
+          up.last_name,
+          u.email,
+          e.title       AS resource_name,
+          vo.title      AS opportunity_title,
+          vs.start_datetime,
+          vs.end_datetime,
+          ROUND(TIMESTAMPDIFF(MINUTE, vs.start_datetime, vs.end_datetime) / 60.0, 2)
+            AS hours_worked
+        FROM ServiceProviderUser spu
+        JOIN ServiceProvider sp  ON sp.provider_id  = spu.provider_id
+        JOIN VolunteerOpportunity vo
+                                 ON vo.provider_id  = sp.provider_id
+                                AND vo.event_id    IS NOT NULL
+                                AND vo.resource_id IS NULL
+        JOIN Event e             ON e.event_id      = vo.event_id
+        JOIN VolunteerShift vs   ON vs.opportunity_id = vo.opportunity_id
+        JOIN VolunteerSignup vsig
+                                 ON vsig.shift_id   = vs.shift_id
+                                AND vsig.status     = 'registered'
+        JOIN \`User\` u           ON u.user_id       = vsig.user_id
+        JOIN UserProfile up       ON up.user_id      = vsig.user_id
+        -- only include volunteers who have an approved connection to any of this provider's resources
+        WHERE spu.user_id = ?
+          AND vs.end_datetime < NOW()
+          AND EXISTS (
+            SELECT 1
+            FROM VolunteerResourceConnection vrc2
+            JOIN Resource r2 ON r2.resource_id = vrc2.resource_id
+            WHERE r2.provider_id = sp.provider_id
+              AND vrc2.user_id   = vsig.user_id
+              AND vrc2.status    = 'approved'
+          )
+
+        ORDER BY last_name ASC, first_name ASC, start_datetime ASC
         `,
-        [userId],
+        [userId, userId],
       );
 
-      let csv = "Opportunity,Provider,Start Time,End Time,Hours Worked\n";
+      let csv =
+        "Volunteer,Email,Resource,Opportunity,Start Time,End Time,Hours Worked\n";
 
       rows.forEach((row) => {
         const line = [
-          `"${row.title || ""}"`,
-          `"${row.provider_name || ""}"`,
+          `"${row.first_name || ""} ${row.last_name || ""}"`,
+          `"${row.email || ""}"`,
+          `"${row.resource_name || ""}"`,
+          `"${row.opportunity_title || ""}"`,
           `"${row.start_datetime || ""}"`,
           `"${row.end_datetime || ""}"`,
           `"${row.hours_worked || 0}"`,
@@ -209,7 +270,7 @@ module.exports = function (app, pool) {
       res.setHeader("Content-Type", "text/csv");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename="volunteer-hours-user-${userId}.csv"`,
+        `attachment; filename="volunteer-hours-${new Date().toISOString().slice(0, 10)}.csv"`,
       );
 
       res.send(csv);
@@ -318,14 +379,24 @@ module.exports = function (app, pool) {
   });
 
   // GET /api/volunteers/:userId/hours
-  // Returns completed volunteer shift data for a user.
+  // Returns completed volunteer shift data for a user based on their approved
+  // VolunteerResourceConnections. Shifts are pulled from VolunteerShift rows
+  // linked to VolunteerOpportunities on those resources where the volunteer
+  // also has a VolunteerSignup.
   // Optional query params: resource_id, date_from, date_to
   app.get("/api/volunteers/:userId/hours", async (req, res) => {
     try {
       const userId = req.params.userId;
-      const { resource_id, date_from, date_to } = req.query;
+      const { resource_id, date_from, date_to, type } = req.query;
 
-      let query = `
+      // Build resource-branch and event-branch conditionally based on `type`
+      const includeResources = !type || type === "resources";
+      const includeEvents = !type || type === "events";
+
+      const branches = [];
+
+      if (includeResources) {
+        branches.push(`
         SELECT
           vs.shift_id,
           vs.start_datetime,
@@ -335,32 +406,78 @@ module.exports = function (app, pool) {
           r.name AS resource_name,
           r.resource_id,
           vo.title AS opportunity_title,
-          sp.name AS provider_name
-        FROM VolunteerSignup s
-        JOIN VolunteerShift vs ON s.shift_id = vs.shift_id
-        JOIN VolunteerOpportunity vo ON vs.opportunity_id = vo.opportunity_id
-        JOIN ServiceProvider sp ON vo.provider_id = sp.provider_id
-        LEFT JOIN Resource r ON vo.resource_id = r.resource_id
-        WHERE s.user_id = ?
-          AND s.status = 'registered'
+          sp.name AS provider_name,
+          'Resource' AS shift_type
+        FROM VolunteerResourceConnection vrc
+        JOIN Resource r         ON r.resource_id      = vrc.resource_id
+        JOIN ServiceProvider sp ON sp.provider_id     = r.provider_id
+        JOIN VolunteerOpportunity vo
+                                ON vo.resource_id     = r.resource_id
+                               AND vo.provider_id     = sp.provider_id
+        JOIN VolunteerShift vs  ON vs.opportunity_id  = vo.opportunity_id
+        JOIN VolunteerSignup vsig
+                                ON vsig.shift_id      = vs.shift_id
+                               AND vsig.user_id       = vrc.user_id
+                               AND vsig.status        = 'registered'
+        WHERE vrc.user_id = ?
+          AND vrc.status  = 'approved'
           AND vs.end_datetime < NOW()
-      `;
-      const params = [userId];
-
-      if (resource_id) {
-        query += " AND vo.resource_id = ?";
-        params.push(resource_id);
-      }
-      if (date_from) {
-        query += " AND DATE(vs.start_datetime) >= ?";
-        params.push(date_from);
-      }
-      if (date_to) {
-        query += " AND DATE(vs.start_datetime) <= ?";
-        params.push(date_to);
+        `);
       }
 
-      query += " ORDER BY vs.start_datetime ASC";
+      if (includeEvents) {
+        branches.push(`
+        SELECT
+          vs.shift_id,
+          vs.start_datetime,
+          vs.end_datetime,
+          ROUND(TIMESTAMPDIFF(MINUTE, vs.start_datetime, vs.end_datetime) / 60, 2) AS hours_worked,
+          DATE(vs.start_datetime) AS shift_date,
+          e.title AS resource_name,
+          vo.resource_id,
+          vo.title AS opportunity_title,
+          sp.name AS provider_name,
+          'Event' AS shift_type
+        FROM VolunteerSignup vsig
+        JOIN VolunteerShift vs  ON vs.shift_id        = vsig.shift_id
+        JOIN VolunteerOpportunity vo
+                                ON vo.opportunity_id  = vs.opportunity_id
+                               AND vo.event_id       IS NOT NULL
+        JOIN Event e            ON e.event_id         = vo.event_id
+        JOIN ServiceProvider sp ON sp.provider_id     = vo.provider_id
+        WHERE vsig.user_id  = ?
+          AND vsig.status   = 'registered'
+          AND vs.end_datetime < NOW()
+        `);
+      }
+
+      // Each branch needs one userId param
+      const baseParams = [
+        ...(includeResources ? [userId] : []),
+        ...(includeEvents ? [userId] : []),
+      ];
+
+      let query = branches.join(" UNION ALL ");
+      const params = [...baseParams];
+
+      // Wrap UNION in a subquery so WHERE filters apply across both branches
+      if (resource_id || date_from || date_to) {
+        query = `SELECT shift_id, start_datetime, end_datetime, hours_worked, shift_date, resource_name, resource_id, opportunity_title, provider_name, shift_type FROM (${query}) AS combined WHERE 1=1`;
+        if (resource_id) {
+          query += " AND resource_id = ?";
+          params.push(resource_id);
+        }
+        if (date_from) {
+          query += " AND DATE(start_datetime) >= ?";
+          params.push(date_from);
+        }
+        if (date_to) {
+          query += " AND DATE(start_datetime) <= ?";
+          params.push(date_to);
+        }
+      }
+
+      query += " ORDER BY start_datetime ASC";
 
       const [rows] = await pool.promise().query(query, params);
       res.json(rows);
@@ -371,19 +488,24 @@ module.exports = function (app, pool) {
   });
 
   // GET /api/volunteers/:userId/resources
-  // Returns only resources where the user has completed volunteer hours
+  // Returns resources where the user has an approved connection and completed shifts
   app.get("/api/volunteers/:userId/resources", async (req, res) => {
     try {
       const userId = req.params.userId;
 
       const [rows] = await pool.promise().query(
         `SELECT DISTINCT r.resource_id, r.name
-         FROM VolunteerSignup s
-         JOIN VolunteerShift vs ON s.shift_id = vs.shift_id
-         JOIN VolunteerOpportunity vo ON vs.opportunity_id = vo.opportunity_id
-         JOIN Resource r ON vo.resource_id = r.resource_id
-         WHERE s.user_id = ?
-           AND s.status = 'registered'
+         FROM VolunteerResourceConnection vrc
+         JOIN Resource r      ON r.resource_id     = vrc.resource_id
+         JOIN VolunteerOpportunity vo
+                              ON vo.resource_id    = r.resource_id
+         JOIN VolunteerShift vs  ON vs.opportunity_id = vo.opportunity_id
+         JOIN VolunteerSignup vsig
+                              ON vsig.shift_id     = vs.shift_id
+                             AND vsig.user_id      = vrc.user_id
+                             AND vsig.status       = 'registered'
+         WHERE vrc.user_id = ?
+           AND vrc.status  = 'approved'
            AND vs.end_datetime < NOW()
          ORDER BY r.name ASC`,
         [userId],
@@ -955,11 +1077,11 @@ module.exports = function (app, pool) {
   });
 
   // POST /api/resource-connections
-  // Creates a new connection or reactivates an inactive one.
-  // Returns { already_active: true } when the volunteer is already connected.
+  // Creates a new pending application, reactivates an approved-but-inactive connection,
+  // or allows a denied volunteer to re-apply.
   app.post("/api/resource-connections", rateLimit(), async (req, res) => {
     try {
-      const { resource_id, user_id } = req.body;
+      const { resource_id, user_id, application_text } = req.body;
 
       if (!resource_id || !user_id) {
         return res
@@ -974,31 +1096,33 @@ module.exports = function (app, pool) {
           [resource_id, user_id],
         );
 
-      // No existing row → insert
+      // No existing row → insert as pending
       if (rows.length === 0) {
         const [result] = await pool.promise().query(
-          `INSERT INTO VolunteerResourceConnection (resource_id, user_id, active, date_changed)
-           VALUES (?, ?, TRUE, CURRENT_TIMESTAMP)`,
-          [resource_id, user_id],
+          `INSERT INTO VolunteerResourceConnection (resource_id, user_id, active, status, application_text, date_changed)
+           VALUES (?, ?, FALSE, 'pending', ?, CURRENT_TIMESTAMP)`,
+          [resource_id, user_id, application_text || null],
         );
 
         await logAudit(
           pool,
           user_id,
-          "CONNECT_RESOURCE",
+          "APPLY_RESOURCE",
           "VolunteerResourceConnection",
           result.insertId,
         );
 
-        return res
-          .status(201)
-          .json({ connection_id: result.insertId, created: true });
+        return res.status(201).json({
+          connection_id: result.insertId,
+          created: true,
+          status: "pending",
+        });
       }
 
       const existing = rows[0];
 
-      // Row exists but inactive → reactivate
-      if (!existing.active) {
+      // Approved + inactive → re-activate (no new application needed)
+      if (existing.status === "approved" && !existing.active) {
         await pool
           .promise()
           .query(
@@ -1017,13 +1141,48 @@ module.exports = function (app, pool) {
         return res.json({
           connection_id: existing.connection_id,
           activated: true,
+          status: "approved",
         });
       }
 
-      // Already active
+      // Approved + active → already volunteering
+      if (existing.status === "approved" && existing.active) {
+        return res.json({
+          connection_id: existing.connection_id,
+          already_active: true,
+          status: "approved",
+        });
+      }
+
+      // Denied → allow re-application
+      if (existing.status === "denied") {
+        await pool
+          .promise()
+          .query(
+            "UPDATE VolunteerResourceConnection SET status = 'pending', active = FALSE, application_text = ?, date_changed = CURRENT_TIMESTAMP WHERE connection_id = ?",
+            [application_text || null, existing.connection_id],
+          );
+
+        await logAudit(
+          pool,
+          user_id,
+          "REAPPLY_RESOURCE",
+          "VolunteerResourceConnection",
+          existing.connection_id,
+        );
+
+        return res.json({
+          connection_id: existing.connection_id,
+          created: true,
+          status: "pending",
+        });
+      }
+
+      // Already pending
       return res.json({
         connection_id: existing.connection_id,
-        already_active: true,
+        already_pending: true,
+        status: "pending",
       });
     } catch (err) {
       console.error("Error creating/updating resource connection:", err);
@@ -1044,6 +1203,7 @@ module.exports = function (app, pool) {
            vrc.connection_id,
            vrc.resource_id,
            vrc.active,
+           vrc.status,
            vrc.date_changed,
            r.name AS resource_name,
            sp.name AS provider_name,
@@ -1128,6 +1288,180 @@ module.exports = function (app, pool) {
         res
           .status(500)
           .json({ error: "Failed to deactivate resource connection" });
+      }
+    },
+  );
+
+  // PUT /api/resource-connections/:id/approve
+  // Provider approves a pending volunteer application.
+  app.put(
+    "/api/resource-connections/:id/approve",
+    rateLimit(),
+    requireRole(pool, "provider"),
+    async (req, res) => {
+      try {
+        const connectionId = req.params.id;
+        await pool
+          .promise()
+          .query(
+            "UPDATE VolunteerResourceConnection SET status = 'approved', active = TRUE, date_changed = CURRENT_TIMESTAMP WHERE connection_id = ?",
+            [connectionId],
+          );
+        await logAudit(
+          pool,
+          req.currentUser?.user_id || null,
+          "APPROVE_VOLUNTEER",
+          "VolunteerResourceConnection",
+          connectionId,
+        );
+        res.json({ connection_id: Number(connectionId), approved: true });
+      } catch (err) {
+        console.error("Error approving volunteer:", err);
+        res.status(500).json({ error: "Failed to approve volunteer" });
+      }
+    },
+  );
+
+  // PUT /api/resource-connections/:id/deny
+  // Provider denies a pending volunteer application.
+  app.put(
+    "/api/resource-connections/:id/deny",
+    rateLimit(),
+    requireRole(pool, "provider"),
+    async (req, res) => {
+      try {
+        const connectionId = req.params.id;
+        await pool
+          .promise()
+          .query(
+            "UPDATE VolunteerResourceConnection SET status = 'denied', active = FALSE, date_changed = CURRENT_TIMESTAMP WHERE connection_id = ?",
+            [connectionId],
+          );
+        await logAudit(
+          pool,
+          req.currentUser?.user_id || null,
+          "DENY_VOLUNTEER",
+          "VolunteerResourceConnection",
+          connectionId,
+        );
+        res.json({ connection_id: Number(connectionId), denied: true });
+      } catch (err) {
+        console.error("Error denying volunteer:", err);
+        res.status(500).json({ error: "Failed to deny volunteer" });
+      }
+    },
+  );
+
+  // DELETE /api/resource-connections/:id
+  // Volunteer rescinds their own application, OR provider revokes an approved volunteer.
+  // Deletes the row entirely so the volunteer can re-apply later.
+  app.delete("/api/resource-connections/:id", rateLimit(), async (req, res) => {
+    try {
+      const connectionId = req.params.id;
+      await pool
+        .promise()
+        .query(
+          "DELETE FROM VolunteerResourceConnection WHERE connection_id = ?",
+          [connectionId],
+        );
+      await logAudit(
+        pool,
+        null,
+        "REMOVE_RESOURCE_CONNECTION",
+        "VolunteerResourceConnection",
+        connectionId,
+      );
+      res.json({ connection_id: Number(connectionId), deleted: true });
+    } catch (err) {
+      console.error("Error removing resource connection:", err);
+      res.status(500).json({ error: "Failed to remove resource connection" });
+    }
+  });
+
+  // GET /api/resources/:id/volunteer-queue
+  // Returns all pending volunteer applications for a resource. Provider only.
+  app.get(
+    "/api/resources/:id/volunteer-queue",
+    requireRole(pool, "provider"),
+    async (req, res) => {
+      try {
+        const resourceId = req.params.id;
+        const [rows] = await pool.promise().query(
+          `SELECT
+             vrc.connection_id,
+             vrc.user_id,
+             vrc.status,
+             vrc.active,
+             vrc.application_text,
+             vrc.date_changed,
+             u.username,
+             u.email,
+             p.first_name,
+             p.last_name,
+             p.phone,
+             p.zip_code
+           FROM VolunteerResourceConnection vrc
+           JOIN \`User\` u ON vrc.user_id = u.user_id
+           JOIN UserProfile p ON vrc.user_id = p.user_id
+           WHERE vrc.resource_id = ? AND vrc.status = 'pending'
+           ORDER BY vrc.date_changed ASC`,
+          [resourceId],
+        );
+        res.json(rows);
+      } catch (err) {
+        console.error("Error fetching volunteer queue:", err);
+        res.status(500).json({ error: "Failed to fetch volunteer queue" });
+      }
+    },
+  );
+
+  // GET /api/resources/:id/application-prompt
+  // Returns the volunteer application prompt text for a resource.
+  app.get("/api/resources/:id/application-prompt", async (req, res) => {
+    try {
+      const resourceId = req.params.id;
+      const [rows] = await pool
+        .promise()
+        .query(
+          "SELECT volunteer_application_prompt FROM Resource WHERE resource_id = ?",
+          [resourceId],
+        );
+      if (rows.length === 0)
+        return res.status(404).json({ error: "Resource not found" });
+      res.json({ prompt: rows[0].volunteer_application_prompt || "" });
+    } catch (err) {
+      console.error("Error fetching application prompt:", err);
+      res.status(500).json({ error: "Failed to fetch application prompt" });
+    }
+  });
+
+  // PUT /api/resources/:id/application-prompt
+  // Saves custom application prompt text for a resource. Provider only.
+  app.put(
+    "/api/resources/:id/application-prompt",
+    rateLimit(),
+    requireRole(pool, "provider"),
+    async (req, res) => {
+      try {
+        const resourceId = req.params.id;
+        const { prompt } = req.body;
+        await pool
+          .promise()
+          .query(
+            "UPDATE Resource SET volunteer_application_prompt = ? WHERE resource_id = ?",
+            [prompt || null, resourceId],
+          );
+        await logAudit(
+          pool,
+          req.currentUser?.user_id || null,
+          "UPDATE_APP_PROMPT",
+          "Resource",
+          resourceId,
+        );
+        res.json({ message: "Application prompt updated successfully" });
+      } catch (err) {
+        console.error("Error updating application prompt:", err);
+        res.status(500).json({ error: "Failed to update application prompt" });
       }
     },
   );

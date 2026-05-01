@@ -585,6 +585,8 @@ function Maps() {
             socialMedia: parseSocialMediaLinks(resource.social_media_links),
             provider_name: resource.provider_name || null,
             eligibility_requirements: resource.eligibility_requirements || null,
+            volunteer_application_prompt:
+              resource.volunteer_application_prompt || null,
             image:
               resource.image_url ||
               "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=500&q=80",
@@ -758,10 +760,16 @@ function Maps() {
 
   return (
     <>
-      <Helmet><title>Resources | Allies Connect</title></Helmet>
+      <Helmet>
+        <title>Resources | Allies Connect</title>
+      </Helmet>
       <Container
         fluid
-        style={{ height: "calc(100vh - 80px)", padding: 0, position: "relative" }}
+        style={{
+          height: "calc(100vh - 80px)",
+          padding: 0,
+          position: "relative",
+        }}
       >
         <div
           style={{

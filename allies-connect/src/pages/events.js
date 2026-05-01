@@ -10,7 +10,7 @@ import {
   Form,
   Row,
 } from "react-bootstrap";
-import { Helmet } from 'react-helmet';
+import { Helmet } from "react-helmet";
 import { useSearchParams } from "react-router-dom";
 
 import "../App.css";
@@ -60,7 +60,7 @@ function Events() {
           endDatetime: event.end_datetime,
           type: event.category_name,
           location: `${event.city}, ${event.state}`,
-          address: `${event.street_address}, ${event.city}, ${event.state} ${event.zip}`,
+          address: `${event.street_address_1}${event.street_address_2 ? ", " + event.street_address_2 : ""}, ${event.city}, ${event.state} ${event.zip}`,
           organization: event.provider_name,
           description: event.description,
           image_url: event.image_url,
@@ -131,7 +131,9 @@ function Events() {
 
   return (
     <>
-      <Helmet><title>Events | Allies Connect</title></Helmet>
+      <Helmet>
+        <title>Events | Allies Connect</title>
+      </Helmet>
       <Container className="event-container">
         <Form>
           <Row className="mb-3">
@@ -252,7 +254,9 @@ function Events() {
                           Organization: {event.organization}
                           <br />
                           Start Date:{" "}
-                          {dayjs(event.startDatetime).format("hh:mmA MM-DD-YYYY")}
+                          {dayjs(event.startDatetime).format(
+                            "hh:mmA MM-DD-YYYY",
+                          )}
                           <br />
                           End Date:{" "}
                           {dayjs(event.endDatetime).format("hh:mmA MM-DD-YYYY")}

@@ -63,19 +63,22 @@ function SubscribedOrgsContent({ onViewDetails, userId }) {
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("resource_name")}
-              aria-label="Sort by resource name">
+              aria-label="Sort by resource name"
+            >
               Resource {sortSymbol("resource_name")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("provider_name")}
-              aria-label="Sort by organization">
+              aria-label="Sort by organization"
+            >
               Organization {sortSymbol("provider_name")}
             </th>
             <th
               style={{ cursor: "pointer" }}
               onClick={() => handleSort("active")}
-              aria-label="Sort by status">
+              aria-label="Sort by status"
+            >
               Status {sortSymbol("active")}
             </th>
             <th>Action</th>
@@ -94,22 +97,40 @@ function SubscribedOrgsContent({ onViewDetails, userId }) {
                 <td>{conn.resource_name}</td>
                 <td>{conn.provider_name}</td>
                 <td>
-                  <Badge bg={conn.active ? "success" : "secondary"}>
-                    {conn.active ? "Active" : "Inactive"}
-                  </Badge>
+                  {conn.status === "pending" ? (
+                    <Badge bg="warning" text="dark">
+                      Pending Approval
+                    </Badge>
+                  ) : conn.status === "denied" ? (
+                    <Badge bg="danger">Denied</Badge>
+                  ) : conn.active ? (
+                    <Badge bg="success">Active</Badge>
+                  ) : (
+                    <Badge bg="secondary">Inactive</Badge>
+                  )}
                 </td>
                 <td>
-                  <button
-                    className={conn.active ? "outline-warning" : "btn-gold"}
-                    disabled={togglingId === conn.connection_id}
-                    onClick={() => handleToggle(conn)}
-                  >
-                    {togglingId === conn.connection_id
-                      ? "Updating…"
-                      : conn.active
-                        ? "Stop Volunteering"
-                        : "Resume Volunteering"}
-                  </button>
+                  {conn.status === "pending" ? (
+                    <span className="text-muted" style={{ fontSize: "13px" }}>
+                      Awaiting review
+                    </span>
+                  ) : conn.status === "denied" ? (
+                    <span className="text-muted" style={{ fontSize: "13px" }}>
+                      Application denied
+                    </span>
+                  ) : (
+                    <button
+                      className={conn.active ? "outline-warning" : "btn-gold"}
+                      disabled={togglingId === conn.connection_id}
+                      onClick={() => handleToggle(conn)}
+                    >
+                      {togglingId === conn.connection_id
+                        ? "Updating…"
+                        : conn.active
+                          ? "Stop Volunteering"
+                          : "Resume Volunteering"}
+                    </button>
+                  )}
                 </td>
               </tr>
             ))

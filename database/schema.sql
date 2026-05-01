@@ -6,7 +6,7 @@ DROP TABLE IF EXISTS AdminInvite;
 DROP TABLE IF EXISTS PasswordResetToken;
 DROP TABLE IF EXISTS VolunteerUnavailableDate;
 DROP TABLE IF EXISTS VolunteerAvailability;
-DROP TABLE IF EXISTS VolunteerProviderConnection;
+DROP TABLE IF EXISTS VolunteerResourceConnection;
 DROP TABLE IF EXISTS ServiceArea;
 DROP TABLE IF EXISTS AuditLog;
 DROP TABLE IF EXISTS EmailLog;
@@ -173,6 +173,7 @@ CREATE TABLE Resource (
   languages_spoken TEXT NULL,
   accessibility TEXT NULL,
   social_media_links TEXT NULL,
+  volunteer_application_prompt TEXT NULL,
   PRIMARY KEY (resource_id),
   CONSTRAINT fk_resource_provider
     FOREIGN KEY (provider_id) REFERENCES ServiceProvider(provider_id)
@@ -343,7 +344,9 @@ CREATE TABLE VolunteerResourceConnection (
   resource_id INT NOT NULL,
   user_id INT NOT NULL,
   date_changed TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  active BOOLEAN NOT NULL DEFAULT TRUE,
+  active BOOLEAN NOT NULL DEFAULT FALSE,
+  status ENUM('pending','approved','denied') NOT NULL DEFAULT 'pending',
+  application_text TEXT NULL,
   PRIMARY KEY (connection_id),
   UNIQUE KEY uq_resource_user (resource_id, user_id),
   CONSTRAINT fk_vpc_resource

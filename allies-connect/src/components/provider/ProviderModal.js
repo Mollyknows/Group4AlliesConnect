@@ -9,6 +9,7 @@ import EditResourcesContent from "./EditResourcesContent";
 import ExportHoursContent from "./ExportHoursContent";
 import ProviderDetailsModal from "./ProviderDetailsModal";
 import SendInviteContent from "./SendInviteContent";
+import VolunteerApprovalContent from "./VolunteerApprovalContent";
 import VolunteerShiftsContent from "./VolunteerShiftsContent";
 
 const MODAL_TYPE = {
@@ -31,6 +32,10 @@ const MODAL_TYPE = {
   volunteerShifts: {
     title: "Volunteer Shift Management",
     Content: VolunteerShiftsContent,
+  },
+  volunteerApproval: {
+    title: "Volunteer Approval",
+    Content: VolunteerApprovalContent,
   },
   exportHours: {
     title: "Export Volunteer Hours",

@@ -313,7 +313,7 @@ function EditAvailabilityContent({ userId }) {
               <tr key={d.unavailable_id}>
                 <td>
                   {new Date(
-                    d.unavailable_date + "T00:00:00",
+                    d.unavailable_date.substring(0, 10) + "T00:00:00",
                   ).toLocaleDateString("en-US", {
                     weekday: "short",
                     month: "short",
