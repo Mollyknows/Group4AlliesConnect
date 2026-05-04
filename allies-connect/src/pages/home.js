@@ -18,7 +18,7 @@ function Home() {
           <h1>Georgia's Community Resource</h1>
           <p className="lead">
             Allies Connect links residents with essential resurces, events, and
-            volunteer opportunities across the state of Gerogia.
+            volunteer opportunities across the state of Georgia.
           </p>
         </div>
         <div className="feature-box">
