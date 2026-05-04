@@ -19,22 +19,29 @@ const formatTime = (time24) => {
   return `${hour12}:${mStr} ${period}`;
 };
 
-function ShiftBuilder({ startTime, endTime, shifts, onShiftsChange }) {
+function ShiftBuilder({
+  startTime,
+  endTime,
+  shifts,
+  onShiftsChange,
+  shiftVolunteers = {},
+  shiftIds = [],
+}) {
   const disabled = !startTime || !endTime || endTime <= startTime;
 
   // Check if we can add more shifts (longest shift must be > 30 min to split)
   const canAddShift =
     !disabled &&
-    shifts.length > 0 &&
-    shifts.some((s) => timeToMinutes(s.end) - timeToMinutes(s.start) > 30);
-
-  const handleCapacityChange = (index, value) => {
-    const newShifts = [...shifts];
-    newShifts[index] = { ...newShifts[index], capacity: value };
-    onShiftsChange(newShifts);
-  };
+    (shifts.length === 0 ||
+      shifts.some((s) => timeToMinutes(s.end) - timeToMinutes(s.start) > 30));
 
   const handleAddShift = () => {
+    // No shifts yet — create the first one spanning the full event time
+    if (shifts.length === 0) {
+      onShiftsChange([{ start: startTime, end: endTime, capacity: "" }]);
+      return;
+    }
+
     const newShifts = [...shifts];
 
     // Find the longest shift to split
@@ -75,6 +82,12 @@ function ShiftBuilder({ startTime, endTime, shifts, onShiftsChange }) {
       },
     );
 
+    onShiftsChange(newShifts);
+  };
+
+  const handleCapacityChange = (index, value) => {
+    const newShifts = [...shifts];
+    newShifts[index] = { ...newShifts[index], capacity: value };
     onShiftsChange(newShifts);
   };
 
@@ -156,52 +169,76 @@ function ShiftBuilder({ startTime, endTime, shifts, onShiftsChange }) {
         const isLast = i === shifts.length - 1;
         const onlyOneShift = shifts.length === 1;
         const endOptions = !isLast && !onlyOneShift ? getEndTimeOptions(i) : [];
+        const vols =
+          shiftIds[i] != null ? (shiftVolunteers[shiftIds[i]] ?? null) : null;
 
         return (
-          <div
-            key={i}
-            className="d-flex align-items-center gap-2 mb-2 p-2 border rounded"
-          >
-            <span className="fw-bold text-nowrap" style={{ minWidth: "55px" }}>
-              Shift {i + 1}
-            </span>
-            <span className="text-nowrap">{formatTime(shift.start)}</span>
-            <span>–</span>
-            {isLast || onlyOneShift ? (
-              <span className="text-nowrap">{formatTime(shift.end)}</span>
-            ) : (
-              <select
-                className="form-select form-select-sm"
-                style={{ width: "auto" }}
-                value={shift.end}
-                onChange={(e) => handleShiftEndChange(i, e.target.value)}
+          <div key={i}>
+            <div className="d-flex align-items-center gap-2 mb-1 p-2 border rounded">
+              <span
+                className="fw-bold text-nowrap"
+                style={{ minWidth: "55px" }}
               >
-                {endOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            )}
-            <input
-              type="number"
-              className="form-control form-control-sm"
-              style={{ width: "80px" }}
-              placeholder="Cap."
-              min="0"
-              value={shift.capacity ?? ""}
-              onChange={(e) => handleCapacityChange(i, e.target.value)}
-              title="Volunteer capacity (leave empty for no limit)"
-            />
-            {shifts.length > 1 && (
-              <button
-                type="button"
-                className="btn btn-sm btn-outline-danger ms-auto"
-                onClick={() => handleRemoveShift(i)}
-                title="Remove shift"
-              >
-                ✕
-              </button>
+                Shift {i + 1}
+              </span>
+              <span className="text-nowrap">{formatTime(shift.start)}</span>
+              <span>–</span>
+              {isLast || onlyOneShift ? (
+                <span className="text-nowrap">{formatTime(shift.end)}</span>
+              ) : (
+                <select
+                  className="form-select form-select-sm"
+                  style={{ width: "auto" }}
+                  value={shift.end}
+                  onChange={(e) => handleShiftEndChange(i, e.target.value)}
+                >
+                  {endOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <span className="text-nowrap text-muted small">Capacity:</span>
+              <input
+                type="number"
+                className="form-control form-control-sm"
+                style={{ width: "80px" }}
+                placeholder="Required"
+                min="1"
+                required
+                value={shift.capacity ?? ""}
+                onChange={(e) => handleCapacityChange(i, e.target.value)}
+                title="Volunteer capacity (minimum 1)"
+              />
+              {shifts.length > 1 && (
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-danger ms-auto"
+                  onClick={() => handleRemoveShift(i)}
+                  title="Remove shift"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            {vols !== null && (
+              <div className="ms-3 mb-2 ps-2 border-start">
+                {vols.length === 0 ? (
+                  <span className="text-muted small fst-italic">
+                    No volunteers signed up.
+                  </span>
+                ) : (
+                  <ul className="list-unstyled mb-0">
+                    {vols.map((v) => (
+                      <li key={v.signup_id} className="small text-secondary">
+                        👤 {v.first_name} {v.last_name}
+                        <span className="text-muted ms-1">({v.email})</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             )}
           </div>
         );

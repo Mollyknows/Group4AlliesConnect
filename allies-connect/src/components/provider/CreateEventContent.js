@@ -24,6 +24,7 @@ function CreateEventContent({ onViewDetails, providerId }) {
     flyer_url: "",
     latitude: null,
     longitude: null,
+    volunteer_only: false,
   });
   const [timeError, setTimeError] = useState("");
   const [dateError, setDateError] = useState("");
@@ -165,18 +166,26 @@ function CreateEventContent({ onViewDetails, providerId }) {
       return;
     }
 
+    // Convert a local date+time to a UTC MySQL datetime string.
+    // new Date("YYYY-MM-DDTHH:mm:ss") is treated as LOCAL time by browsers.
+    const toUTCMysql = (date, time) => {
+      const d = new Date(`${date}T${time}:00`);
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:00`;
+    };
+
     // Bundle all form data for the backend
-    const startDatetime = `${formData.event_date} ${formData.start_time}:00`;
-    const endDatetime = `${formData.event_date} ${formData.end_time}:00`;
+    const startDatetime = toUTCMysql(formData.event_date, formData.start_time);
+    const endDatetime = toUTCMysql(formData.event_date, formData.end_time);
 
     const eventShifts = shifts.map((shift, index) => ({
       shift_number: index + 1,
-      start_time: `${formData.event_date} ${shift.start}:00`,
-      end_time: `${formData.event_date} ${shift.end}:00`,
+      start_time: toUTCMysql(formData.event_date, shift.start),
+      end_time: toUTCMysql(formData.event_date, shift.end),
       capacity:
         shift.capacity !== "" && shift.capacity != null
-          ? Number(shift.capacity)
-          : null,
+          ? Math.max(1, Number(shift.capacity))
+          : 1,
     }));
 
     const payload = {
@@ -198,6 +207,7 @@ function CreateEventContent({ onViewDetails, providerId }) {
       shifts: eventShifts,
       image_url: formData.image_url || null,
       flyer_url: formData.flyer_url || null,
+      volunteer_only: formData.volunteer_only,
       latitude: formData.latitude,
       longitude: formData.longitude,
     };
@@ -233,6 +243,7 @@ function CreateEventContent({ onViewDetails, providerId }) {
         flyer_url: "",
         latitude: null,
         longitude: null,
+        volunteer_only: false,
       });
       setSelectedCategories([]);
       setShifts([]);
@@ -455,6 +466,26 @@ function CreateEventContent({ onViewDetails, providerId }) {
           value={formData.flyer_url}
           onChange={handleChange}
         />
+      </div>
+      <div className="mb-3 form-check">
+        <input
+          type="checkbox"
+          className="form-check-input"
+          id="volunteerOnly"
+          checked={formData.volunteer_only}
+          onChange={(e) =>
+            setFormData((prev) => ({
+              ...prev,
+              volunteer_only: e.target.checked,
+            }))
+          }
+        />
+        <label className="form-check-label" htmlFor="volunteerOnly">
+          <strong>Volunteer Only</strong>
+          <span className="text-muted ms-2" style={{ fontSize: "0.875rem" }}>
+            (Only visible to volunteers, providers, and admins)
+          </span>
+        </label>
       </div>
       <button type="submit" className="btn-gold">
         Create Event

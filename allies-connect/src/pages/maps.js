@@ -593,11 +593,19 @@ function Maps() {
           };
         };
 
+        // Determine if the current user can see volunteer-only events
+        const userRole = JSON.parse(localStorage.getItem("role") || "null");
+        const canSeeVolunteerOnly =
+          userRole === "volunteer" ||
+          userRole === "provider" ||
+          userRole === "admin";
+
         // Exclude events that have already ended (or already started if no end time)
         const now = new Date();
         const upcomingEvents = eventsResponse.data.filter(
           (event) =>
-            new Date(event.end_datetime || event.start_datetime) >= now,
+            new Date(event.end_datetime || event.start_datetime) >= now &&
+            (!event.volunteer_only || canSeeVolunteerOnly),
         );
 
         const eventsPins = upcomingEvents.map(formatEvent);

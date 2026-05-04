@@ -27,6 +27,8 @@ function Events() {
     searchParams.get("org") || "",
   );
   const [showInactiveEvents, setShowInactiveEvents] = useState(false);
+  const [volunteerOnlyFilter, setVolunteerOnlyFilter] = useState(false);
+  const [categories, setCategories] = useState([]);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -41,36 +43,54 @@ function Events() {
     setEventLocationFilter("");
     setEventOrgNameFilter("");
     setShowInactiveEvents(false);
+    setVolunteerOnlyFilter(false);
     setSearchParams({});
   };
 
   useEffect(() => {
-    fetch(`${API_URL}/api/events`)
-      .then((res) => {
-        // Check for HTTP errors
-        if (!res.ok) throw new Error("Failed to fetch events");
-        return res.json();
-      })
-      .then((data) => {
-        const mappedEvents = data.map((event) => ({
-          id: event.event_id,
-          title: event.title,
-          date: event.event_date,
-          startDatetime: event.start_datetime,
-          endDatetime: event.end_datetime,
-          type: event.category_name,
-          location: `${event.city}, ${event.state}`,
-          address: `${event.street_address_1}${event.street_address_2 ? ", " + event.street_address_2 : ""}, ${event.city}, ${event.state} ${event.zip}`,
-          organization: event.provider_name,
-          description: event.description,
-          image_url: event.image_url,
-          flyer_url: event.flyer_url,
-          status: "Active", // TODO can be derived from data later
-        }));
+    const userRole = JSON.parse(localStorage.getItem("role") || "null");
+    const canSeeVolunteerOnly =
+      userRole === "volunteer" ||
+      userRole === "provider" ||
+      userRole === "admin";
+
+    Promise.all([
+      fetch(`${API_URL}/api/categories`).then((r) => r.json()),
+      fetch(`${API_URL}/api/events`).then((r) => {
+        if (!r.ok) throw new Error("Failed to fetch events");
+        return r.json();
+      }),
+    ])
+      .then(([categoryData, eventsData]) => {
+        setCategories(
+          Array.isArray(categoryData)
+            ? categoryData
+                .filter((c) => c.type === "event" || c.type === "both")
+                .map((c) => c.name)
+                .sort()
+            : [],
+        );
+        const mappedEvents = eventsData
+          .filter((event) => !event.volunteer_only || canSeeVolunteerOnly)
+          .map((event) => ({
+            id: event.event_id,
+            title: event.title,
+            date: event.event_date,
+            startDatetime: event.start_datetime,
+            endDatetime: event.end_datetime,
+            type: event.category_name,
+            location: `${event.city}, ${event.state}`,
+            address: `${event.street_address_1}${event.street_address_2 ? ", " + event.street_address_2 : ""}, ${event.city}, ${event.state} ${event.zip}`,
+            organization: event.provider_name,
+            description: event.description,
+            image_url: event.image_url,
+            flyer_url: event.flyer_url,
+            volunteer_only: !!event.volunteer_only,
+            status: "Active",
+          }));
         setEvents(mappedEvents);
         setLoading(false);
       })
-      // Catch Network or runtime errors
       .catch((err) => {
         console.error("Error fetching events:", err);
         setError(err.message);
@@ -114,15 +134,16 @@ function Events() {
       .includes(eventOrgNameFilter.toLowerCase());
     const isActive = dayjs(event.endDatetime).isAfter(dayjs());
     const matchesEventStatus = showInactiveEvents || isActive;
+    const matchesVolunteerOnly = !volunteerOnlyFilter || event.volunteer_only;
     return (
       matchesDate &&
       matchesName &&
       matchesType &&
       matchesLocation &&
       matchesOrgName &&
-      matchesEventStatus
+      matchesEventStatus &&
+      matchesVolunteerOnly
     );
-    //TODO add volunteer filter when that data is available from backend
   });
 
   const uniqueLocations = [
@@ -178,10 +199,12 @@ function Events() {
                       value={eventTypeFilter}
                       onChange={(e) => setEventTypeFilter(e.target.value)}
                     >
-                      <option>All Types</option>
-                      <option>Food Assistance</option>
-                      <option>Housing</option>
-                      <option>Educational Workshop</option>
+                      <option value="">All Types</option>
+                      {categories.map((name) => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
                     </Form.Select>
                   </Form.Group>
                   {/* In future, this could be dynamically called from user's Location */}
@@ -208,13 +231,22 @@ function Events() {
                       onChange={(e) => setEventOrgNameFilter(e.target.value)}
                     />
                   </Form.Group>
-                  <Form.Group controlId="eventAcceptingVolunteers">
-                    <Form.Check
-                      className="mt-2"
-                      type="checkbox"
-                      label="Events Accepting Volunteers"
-                    />
-                  </Form.Group>
+                  {JSON.parse(localStorage.getItem("role") || "null") &&
+                    ["volunteer", "provider", "admin"].includes(
+                      JSON.parse(localStorage.getItem("role") || "null"),
+                    ) && (
+                      <Form.Group controlId="volunteerOnlyFilter">
+                        <Form.Check
+                          className="mt-2"
+                          type="checkbox"
+                          label="Volunteer Only Events"
+                          checked={volunteerOnlyFilter}
+                          onChange={(e) =>
+                            setVolunteerOnlyFilter(e.target.checked)
+                          }
+                        />
+                      </Form.Group>
+                    )}
                   <Form.Group controlId="showInactiveEvents">
                     <Form.Check
                       className="mt-2"

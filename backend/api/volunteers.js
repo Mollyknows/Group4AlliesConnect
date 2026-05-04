@@ -1,7 +1,11 @@
 const { logAudit, logEmail } = require("../utils/logging");
 const { requireRole } = require("../middleware/permissions");
 const { rateLimit } = require("../middleware/rateLimit");
-const { sendVolunteerScheduledEmail, sendVolunteerApprovedEmail, sendVolunteerDeniedEmail } = require("../utils/email");
+const {
+  sendVolunteerScheduledEmail,
+  sendVolunteerApprovedEmail,
+  sendVolunteerDeniedEmail,
+} = require("../utils/email");
 
 module.exports = function (app, pool) {
   // GET /api/volunteer-opportunities
@@ -167,13 +171,90 @@ module.exports = function (app, pool) {
     }
   });
 
+  // GET /api/users/:id/provider-volunteers
+  // Returns all volunteers (approved or denied, not pending) connected to any
+  // resource managed by the given provider user.
+  // Optional query param: resource_id — filters to a specific resource.
+  app.get("/api/users/:id/provider-volunteers", async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const { resource_id } = req.query;
+
+      const params = [userId];
+      let resourceFilter = "";
+      if (resource_id) {
+        resourceFilter = "AND r.resource_id = ?";
+        params.push(resource_id);
+      }
+
+      const [rows] = await pool.promise().query(
+        `
+        SELECT DISTINCT
+          u.user_id,
+          up.first_name,
+          up.last_name,
+          u.email,
+          r.resource_id,
+          r.name AS resource_name
+        FROM ServiceProviderUser spu
+        JOIN ServiceProvider sp       ON sp.provider_id  = spu.provider_id
+        JOIN Resource r               ON r.provider_id   = sp.provider_id
+        JOIN VolunteerResourceConnection vrc
+                                      ON vrc.resource_id = r.resource_id
+                                     AND vrc.status      IN ('approved', 'denied')
+        JOIN \`User\` u                ON u.user_id       = vrc.user_id
+        JOIN UserProfile up            ON up.user_id      = vrc.user_id
+        WHERE spu.user_id = ?
+          ${resourceFilter}
+        ORDER BY up.last_name ASC, up.first_name ASC
+        `,
+        params,
+      );
+
+      res.json(rows);
+    } catch (err) {
+      console.error("Error fetching provider volunteers:", err);
+      res.status(500).json({ error: "Failed to fetch provider volunteers" });
+    }
+  });
+
   // GET /api/users/:id/volunteer-hours/export
   // :id is the provider's user_id. Returns hours for all approved volunteers
   // across all resources managed by that provider, calculated from VolunteerShift
   // start/end times where the volunteer has a VolunteerSignup for the shift.
+  // Optional query params: volunteer_id (filter to a specific volunteer),
+  //                        resource_id  (filter to a specific resource)
   app.get("/api/users/:id/volunteer-hours/export", async (req, res) => {
     try {
       const userId = req.params.id;
+      const { volunteer_id, resource_id } = req.query;
+
+      const params = [userId];
+      let volunteerFilter = "";
+      let resourceFilter = "";
+
+      if (volunteer_id) {
+        volunteerFilter = "AND vrc.user_id = ?";
+        params.push(volunteer_id);
+      }
+      if (resource_id) {
+        resourceFilter = "AND r.resource_id = ?";
+        params.push(resource_id);
+      }
+
+      const eventParams = [userId];
+      let eventVolunteerFilter = "";
+      let eventResourceFilter = "";
+
+      if (volunteer_id) {
+        eventVolunteerFilter = "AND vsig.user_id = ?";
+        eventParams.push(volunteer_id);
+      }
+      if (resource_id) {
+        // If filtering by resource, skip event-based shifts entirely
+        // (they aren't tied to a specific resource)
+        eventResourceFilter = "AND 1=0";
+      }
 
       const [rows] = await pool.promise().query(
         `
@@ -206,6 +287,8 @@ module.exports = function (app, pool) {
                                 AND vsig.status     = 'registered'
         WHERE spu.user_id = ?
           AND vs.end_datetime < NOW()
+          ${volunteerFilter}
+          ${resourceFilter}
 
         UNION ALL
 
@@ -233,21 +316,23 @@ module.exports = function (app, pool) {
                                 AND vsig.status     = 'registered'
         JOIN \`User\` u           ON u.user_id       = vsig.user_id
         JOIN UserProfile up       ON up.user_id      = vsig.user_id
-        -- only include volunteers who have an approved connection to any of this provider's resources
+        -- only include volunteers who have an approved/active/inactive connection to any of this provider's resources
         WHERE spu.user_id = ?
           AND vs.end_datetime < NOW()
+          ${eventVolunteerFilter}
+          ${eventResourceFilter}
           AND EXISTS (
             SELECT 1
             FROM VolunteerResourceConnection vrc2
             JOIN Resource r2 ON r2.resource_id = vrc2.resource_id
             WHERE r2.provider_id = sp.provider_id
               AND vrc2.user_id   = vsig.user_id
-              AND vrc2.status    = 'approved'
+              AND vrc2.status    IN ('approved', 'denied')
           )
 
         ORDER BY last_name ASC, first_name ASC, start_datetime ASC
         `,
-        [userId, userId],
+        [...params, userId, ...eventParams],
       );
 
       let csv =
@@ -573,6 +658,33 @@ module.exports = function (app, pool) {
     } catch (err) {
       console.error("Error fetching shifts for event:", err);
       res.status(500).json({ error: "Failed to fetch shifts for event" });
+    }
+  });
+
+  // GET /api/shifts/:shiftId/volunteers
+  // Returns all volunteers signed up for a specific shift
+  app.get("/api/shifts/:shiftId/volunteers", async (req, res) => {
+    try {
+      const shiftId = req.params.shiftId;
+      const [rows] = await pool.promise().query(
+        `SELECT
+          u.user_id,
+          up.first_name,
+          up.last_name,
+          u.email,
+          s.signup_id,
+          s.status
+        FROM VolunteerSignup s
+        JOIN \`User\` u ON s.user_id = u.user_id
+        LEFT JOIN UserProfile up ON up.user_id = u.user_id
+        WHERE s.shift_id = ? AND s.status = 'registered'
+        ORDER BY up.last_name ASC, up.first_name ASC`,
+        [shiftId],
+      );
+      res.json(rows);
+    } catch (err) {
+      console.error("Error fetching shift volunteers:", err);
+      res.status(500).json({ error: "Failed to fetch shift volunteers" });
     }
   });
 
