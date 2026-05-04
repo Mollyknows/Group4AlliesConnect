@@ -150,8 +150,9 @@ module.exports = function (app, pool) {
           r.accessibility,
           r.social_media_links,
           r.volunteer_application_prompt,
+          r.website,
           s.name AS provider_name,
-          s.website,
+          s.website AS provider_website,
           c.name AS category_name,
           l.street_address_1,
           l.street_address_2,
@@ -217,8 +218,9 @@ module.exports = function (app, pool) {
           r.accessibility,
           r.social_media_links,
           r.volunteer_application_prompt,
+          r.website,
           s.name AS provider_name,
-          s.website,
+          s.website AS provider_website,
           c.name AS category_name,
           l.street_address_1,
           l.street_address_2,
@@ -292,6 +294,7 @@ module.exports = function (app, pool) {
           contact_phone,
           languages_spoken,
           accessibility,
+          website,
           social_media_links,
           latitude,
           longitude,
@@ -351,9 +354,10 @@ module.exports = function (app, pool) {
           contact_phone,
           languages_spoken,
           accessibility,
+          website,
           social_media_links
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             provider_id,
             categoryId,
@@ -368,6 +372,7 @@ module.exports = function (app, pool) {
             contact_phone || null,
             languages_spoken || null,
             accessibility || null,
+            website || null,
             social_media_links || null,
           ],
         );
@@ -481,6 +486,7 @@ module.exports = function (app, pool) {
           contact_phone = ?,
           languages_spoken = ?,
           accessibility = ?,
+          website = ?,
           social_media_links = ?
         WHERE resource_id = ?
       `;
@@ -500,19 +506,10 @@ module.exports = function (app, pool) {
             contact_phone || null,
             languages_spoken || null,
             accessibility || null,
+            website || null,
             social_media_links || null,
             resourceId,
           ]);
-
-        if (website !== undefined) {
-          await pool.promise().query(
-            `UPDATE ServiceProvider sp
-             JOIN Resource r ON r.provider_id = sp.provider_id
-             SET sp.website = ?
-             WHERE r.resource_id = ?`,
-            [website || null, resourceId],
-          );
-        }
 
         await logAudit(pool, 1, "UPDATE_RESOURCE", "Resource", resourceId);
 

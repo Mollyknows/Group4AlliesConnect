@@ -19,6 +19,9 @@ const dbConfig = {
   user: isDev ? process.env.DEV_DB_USER : process.env.DB_USER,
   password: isDev ? process.env.DEV_DB_PASSWORD : process.env.DB_PASSWORD,
   database: isDev ? process.env.DEV_DB_NAME : process.env.DB_NAME,
+  // Treat all DATETIME values as UTC so JS Date objects serialise with a Z
+  // suffix and the frontend can convert to the viewer's local timezone.
+  timezone: "+00:00",
 };
 
 // Create a MySQL connection pool

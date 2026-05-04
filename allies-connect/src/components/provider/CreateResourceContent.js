@@ -163,9 +163,9 @@ function CreateResourceContent({ onViewDetails, providerId, userId }) {
       zip: formData.zip,
       hours: JSON.stringify(hours),
       category_ids: selectedCategories.map((c) => c.category_id),
-      phone: formData.phone.replace(/\D/g, ""),
+      contact_phone: formData.phone.replace(/\D/g, ""),
       website: formData.website || null,
-      languages: formData.languages || null,
+      languages_spoken: formData.languages || null,
       social_media_links:
         formData.social_media_links.length > 0
           ? JSON.stringify(formData.social_media_links)

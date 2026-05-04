@@ -5,6 +5,7 @@ import "../../App.css";
 import { API_URL } from "../../config";
 import AddressAutocomplete from "./AddressAutocomplete";
 import { DAYS_OF_WEEK, formatHours, TIME_OPTIONS } from "./providerHelpers";
+import ShiftBuilder from "./ShiftBuilder";
 import SocialMediaLinks from "./SocialMediaLinks";
 
 function formatPhone(value) {
@@ -78,27 +79,34 @@ function EditEventDetailsContent({ data, onHide }) {
   const [saving, setSaving] = useState(false);
 
   // ── Shift management state ──
-  const [shifts, setShifts] = useState([]);
+  const [shiftBuilderShifts, setShiftBuilderShifts] = useState([]);
+  const [originalShiftIds, setOriginalShiftIds] = useState([]);
   const [loadingShifts, setLoadingShifts] = useState(false);
-  const [editingShiftId, setEditingShiftId] = useState(null);
-  const [editShiftData, setEditShiftData] = useState({});
-  const [savingShiftId, setSavingShiftId] = useState(null);
-  const [deletingShiftId, setDeletingShiftId] = useState(null);
-  const [showAddShift, setShowAddShift] = useState(false);
-  const [newShift, setNewShift] = useState({
-    start_datetime: "",
-    end_datetime: "",
-    capacity: "",
-  });
-  const [addingShift, setAddingShift] = useState(false);
+  // Map of shiftId → volunteer list for display
+  const [shiftVolunteers, setShiftVolunteers] = useState({});
+
+  // Convert a full datetime string to a local "HH:MM" string for ShiftBuilder
+  const toTimeString = (dt) => {
+    if (!dt) return "";
+    const d = new Date(
+      typeof dt === "string" && dt.indexOf("T") === -1
+        ? dt.replace(" ", "T")
+        : dt,
+    );
+    if (isNaN(d)) return "";
+    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  };
 
   const formatShiftDT = (iso) => {
     if (!iso) return "";
-    const normalized =
+    const d = new Date(
       typeof iso === "string" && iso.indexOf("T") === -1
         ? iso.replace(" ", "T")
-        : iso;
-    return normalized.slice(0, 16);
+        : iso,
+    );
+    if (isNaN(d)) return "";
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
 
   const displayShiftDT = (iso) => {
@@ -126,11 +134,9 @@ function EditEventDetailsContent({ data, onHide }) {
       setFormData({
         title: data.title || "",
         start_datetime: data.start_datetime
-          ? data.start_datetime.replace(" ", "T").slice(0, 16)
+          ? formatShiftDT(data.start_datetime)
           : "",
-        end_datetime: data.end_datetime
-          ? data.end_datetime.replace(" ", "T").slice(0, 16)
-          : "",
+        end_datetime: data.end_datetime ? formatShiftDT(data.end_datetime) : "",
         description: data.description || "",
         capacity: data.capacity || "",
         registration_required: data.registration_required || "unknown",
@@ -150,7 +156,36 @@ function EditEventDetailsContent({ data, onHide }) {
       const res = await fetch(`${API_URL}/api/events/${data.event_id}/shifts`);
       if (res.ok) {
         const rows = await res.json();
-        setShifts(Array.isArray(rows) ? rows : []);
+        const sorted = Array.isArray(rows)
+          ? [...rows].sort(
+              (a, b) => new Date(a.start_datetime) - new Date(b.start_datetime),
+            )
+          : [];
+        const ids = sorted.map((s) => s.shift_id);
+        setOriginalShiftIds(ids);
+        setShiftBuilderShifts(
+          sorted.map((s) => ({
+            start: toTimeString(s.start_datetime),
+            end: toTimeString(s.end_datetime),
+            capacity: s.capacity != null ? String(s.capacity) : "",
+          })),
+        );
+
+        // Fetch volunteers for each shift
+        const volMap = {};
+        await Promise.all(
+          ids.map(async (shiftId) => {
+            try {
+              const vRes = await fetch(
+                `${API_URL}/api/shifts/${shiftId}/volunteers`,
+              );
+              if (vRes.ok) volMap[shiftId] = await vRes.json();
+            } catch {
+              volMap[shiftId] = [];
+            }
+          }),
+        );
+        setShiftVolunteers(volMap);
       }
     } catch (err) {
       console.error("Error fetching shifts:", err);
@@ -164,6 +199,17 @@ function EditEventDetailsContent({ data, onHide }) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Convert a local "YYYY-MM-DDTHH:mm" string (from datetime-local input or
+  // formatShiftDT) to a UTC MySQL datetime string.  new Date("...T...") with no
+  // timezone suffix is treated as LOCAL time by browsers.
+  const localDTToUTCMysql = (localDT) => {
+    if (!localDT) return null;
+    const d = new Date(localDT);
+    if (isNaN(d)) return null;
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:00`;
+  };
+
   const handleSave = async () => {
     if (!formData.title) {
       alert("Title is required.");
@@ -171,14 +217,11 @@ function EditEventDetailsContent({ data, onHide }) {
     }
     setSaving(true);
     try {
+      // ── Save event details ──
       const payload = {
         ...formData,
-        start_datetime: formData.start_datetime
-          ? formData.start_datetime.replace("T", " ") + ":00"
-          : null,
-        end_datetime: formData.end_datetime
-          ? formData.end_datetime.replace("T", " ") + ":00"
-          : null,
+        start_datetime: localDTToUTCMysql(formData.start_datetime),
+        end_datetime: localDTToUTCMysql(formData.end_datetime),
         capacity: formData.capacity ? Number(formData.capacity) : null,
         image_url: formData.image_url || null,
         flyer_url: formData.flyer_url || null,
@@ -193,6 +236,57 @@ function EditEventDetailsContent({ data, onHide }) {
         alert(err.error || "Failed to update event.");
         return;
       }
+
+      // ── Batch-save shifts ──
+      // Use the LOCAL event date (from the local-time formData value) so that
+      // the shift times are combined with the right calendar date before the
+      // UTC conversion below.
+      const eventDate = formData.start_datetime
+        ? formData.start_datetime.split("T")[0]
+        : data.start_datetime
+          ? formatShiftDT(data.start_datetime).split("T")[0]
+          : null;
+
+      if (eventDate && shiftBuilderShifts.length > 0) {
+        // Update or create each shift by index
+        for (let i = 0; i < shiftBuilderShifts.length; i++) {
+          const s = shiftBuilderShifts[i];
+          const shiftPayload = {
+            start_datetime: localDTToUTCMysql(`${eventDate}T${s.start}`),
+            end_datetime: localDTToUTCMysql(`${eventDate}T${s.end}`),
+            capacity:
+              s.capacity !== "" && s.capacity != null
+                ? Math.max(1, Number(s.capacity))
+                : 1,
+          };
+          if (i < originalShiftIds.length) {
+            // Update existing shift
+            await fetch(`${API_URL}/api/shifts/${originalShiftIds[i]}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(shiftPayload),
+            });
+          } else {
+            // Create new shift
+            await fetch(`${API_URL}/api/events/${data.event_id}/shifts`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(shiftPayload),
+            });
+          }
+        }
+        // Delete shifts that were removed
+        for (
+          let i = shiftBuilderShifts.length;
+          i < originalShiftIds.length;
+          i++
+        ) {
+          await fetch(`${API_URL}/api/shifts/${originalShiftIds[i]}`, {
+            method: "DELETE",
+          });
+        }
+      }
+
       alert("Event updated successfully!");
       onHide();
     } catch (err) {
@@ -200,118 +294,6 @@ function EditEventDetailsContent({ data, onHide }) {
       alert("An error occurred while updating the event.");
     } finally {
       setSaving(false);
-    }
-  };
-
-  // ── Shift CRUD handlers ──
-  const startEditShift = (shift) => {
-    setEditingShiftId(shift.shift_id);
-    setEditShiftData({
-      start_datetime: formatShiftDT(shift.start_datetime),
-      end_datetime: formatShiftDT(shift.end_datetime),
-      capacity: shift.capacity != null ? shift.capacity : "",
-    });
-  };
-
-  const cancelEditShift = () => {
-    setEditingShiftId(null);
-    setEditShiftData({});
-  };
-
-  const saveEditShift = async (shiftId) => {
-    if (!editShiftData.start_datetime || !editShiftData.end_datetime) {
-      alert("Start and end times are required.");
-      return;
-    }
-    setSavingShiftId(shiftId);
-    try {
-      const payload = {
-        start_datetime: editShiftData.start_datetime.replace("T", " ") + ":00",
-        end_datetime: editShiftData.end_datetime.replace("T", " ") + ":00",
-        capacity:
-          editShiftData.capacity !== "" && editShiftData.capacity != null
-            ? Number(editShiftData.capacity)
-            : null,
-      };
-      const res = await fetch(`${API_URL}/api/shifts/${shiftId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        alert(err.error || "Failed to update shift.");
-        return;
-      }
-      setEditingShiftId(null);
-      setEditShiftData({});
-      await fetchShifts();
-    } catch (err) {
-      console.error("Error updating shift:", err);
-      alert("An error occurred while updating the shift.");
-    } finally {
-      setSavingShiftId(null);
-    }
-  };
-
-  const deleteShift = async (shiftId) => {
-    if (
-      !window.confirm(
-        "Delete this shift? Any existing volunteer signups for it will also be removed.",
-      )
-    )
-      return;
-    setDeletingShiftId(shiftId);
-    try {
-      const res = await fetch(`${API_URL}/api/shifts/${shiftId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        alert(err.error || "Failed to delete shift.");
-        return;
-      }
-      await fetchShifts();
-    } catch (err) {
-      console.error("Error deleting shift:", err);
-    } finally {
-      setDeletingShiftId(null);
-    }
-  };
-
-  const handleAddShift = async () => {
-    if (!newShift.start_datetime || !newShift.end_datetime) {
-      alert("Start and end times are required.");
-      return;
-    }
-    setAddingShift(true);
-    try {
-      const payload = {
-        start_datetime: newShift.start_datetime.replace("T", " ") + ":00",
-        end_datetime: newShift.end_datetime.replace("T", " ") + ":00",
-        capacity:
-          newShift.capacity !== "" && newShift.capacity != null
-            ? Number(newShift.capacity)
-            : null,
-      };
-      const res = await fetch(`${API_URL}/api/events/${data.event_id}/shifts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        alert(err.error || "Failed to add shift.");
-        return;
-      }
-      setNewShift({ start_datetime: "", end_datetime: "", capacity: "" });
-      setShowAddShift(false);
-      await fetchShifts();
-    } catch (err) {
-      console.error("Error adding shift:", err);
-      alert("An error occurred while adding the shift.");
-    } finally {
-      setAddingShift(false);
     }
   };
 
@@ -362,25 +344,71 @@ function EditEventDetailsContent({ data, onHide }) {
           <label className="form-label">
             <strong>Start</strong>
           </label>
-          <input
-            type="datetime-local"
-            className="form-control"
-            name="start_datetime"
-            value={formData.start_datetime}
-            onChange={handleChange}
-          />
+          <div className="d-flex gap-2">
+            <input
+              type="date"
+              className="form-control"
+              value={formData.start_datetime.split("T")[0] || ""}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  start_datetime: `${e.target.value}T${prev.start_datetime.split("T")[1] || "00:00"}`,
+                }))
+              }
+            />
+            <select
+              className="form-select"
+              value={formData.start_datetime.split("T")[1] || ""}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  start_datetime: `${prev.start_datetime.split("T")[0] || ""}T${e.target.value}`,
+                }))
+              }
+            >
+              <option value="">-- Time --</option>
+              {TIME_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         <div className="col-md-6">
           <label className="form-label">
             <strong>End</strong>
           </label>
-          <input
-            type="datetime-local"
-            className="form-control"
-            name="end_datetime"
-            value={formData.end_datetime}
-            onChange={handleChange}
-          />
+          <div className="d-flex gap-2">
+            <input
+              type="date"
+              className="form-control"
+              value={formData.end_datetime.split("T")[0] || ""}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  end_datetime: `${e.target.value}T${prev.end_datetime.split("T")[1] || "00:00"}`,
+                }))
+              }
+            />
+            <select
+              className="form-select"
+              value={formData.end_datetime.split("T")[1] || ""}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  end_datetime: `${prev.end_datetime.split("T")[0] || ""}T${e.target.value}`,
+                }))
+              }
+            >
+              <option value="">-- Time --</option>
+              {TIME_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
       <div className="row mb-3">
@@ -466,217 +494,26 @@ function EditEventDetailsContent({ data, onHide }) {
 
       {/* ── Volunteer Shifts ── */}
       <hr />
-      <div className="mb-3">
-        <div className="d-flex justify-content-between align-items-center mb-2">
-          <label className="form-label mb-0">
-            <strong>Volunteer Shifts</strong>
-          </label>
-          {!showAddShift && (
-            <button
-              type="button"
-              className="btn btn-sm btn-outline-primary"
-              onClick={() => setShowAddShift(true)}
-            >
-              + Add Shift
-            </button>
-          )}
-        </div>
-
-        {loadingShifts ? (
-          <p className="text-muted">Loading shifts…</p>
-        ) : shifts.length === 0 && !showAddShift ? (
-          <p className="text-muted">No volunteer shifts for this event.</p>
-        ) : (
-          <table className="table table-bordered table-sm text-center align-middle">
-            <thead>
-              <tr>
-                <th>Start</th>
-                <th>End</th>
-                <th>Capacity</th>
-                <th>Signed Up</th>
-                <th style={{ width: "140px" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {shifts.map((shift) => {
-                const isEditing = editingShiftId === shift.shift_id;
-                return (
-                  <tr key={shift.shift_id}>
-                    {isEditing ? (
-                      <>
-                        <td>
-                          <input
-                            type="datetime-local"
-                            className="form-control form-control-sm"
-                            value={editShiftData.start_datetime}
-                            onChange={(e) =>
-                              setEditShiftData((prev) => ({
-                                ...prev,
-                                start_datetime: e.target.value,
-                              }))
-                            }
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="datetime-local"
-                            className="form-control form-control-sm"
-                            value={editShiftData.end_datetime}
-                            onChange={(e) =>
-                              setEditShiftData((prev) => ({
-                                ...prev,
-                                end_datetime: e.target.value,
-                              }))
-                            }
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            className="form-control form-control-sm"
-                            min="0"
-                            placeholder="No limit"
-                            value={editShiftData.capacity}
-                            onChange={(e) =>
-                              setEditShiftData((prev) => ({
-                                ...prev,
-                                capacity: e.target.value,
-                              }))
-                            }
-                          />
-                        </td>
-                        <td>{shift.signup_count}</td>
-                        <td>
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-success me-1"
-                            disabled={savingShiftId === shift.shift_id}
-                            onClick={() => saveEditShift(shift.shift_id)}
-                          >
-                            {savingShiftId === shift.shift_id ? "…" : "Save"}
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-secondary"
-                            onClick={cancelEditShift}
-                          >
-                            Cancel
-                          </button>
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td>{displayShiftDT(shift.start_datetime)}</td>
-                        <td>{displayShiftDT(shift.end_datetime)}</td>
-                        <td>
-                          {shift.capacity != null ? shift.capacity : "No limit"}
-                        </td>
-                        <td>{shift.signup_count}</td>
-                        <td>
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-primary me-1"
-                            onClick={() => startEditShift(shift)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-danger"
-                            disabled={deletingShiftId === shift.shift_id}
-                            onClick={() => deleteShift(shift.shift_id)}
-                          >
-                            {deletingShiftId === shift.shift_id
-                              ? "…"
-                              : "Delete"}
-                          </button>
-                        </td>
-                      </>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-
-        {/* ── Add new shift form ── */}
-        {showAddShift && (
-          <div className="border rounded p-3 mb-2">
-            <h6 className="mb-2">New Shift</h6>
-            <div className="row mb-2">
-              <div className="col-md-5">
-                <label className="form-label form-label-sm">Start</label>
-                <input
-                  type="datetime-local"
-                  className="form-control form-control-sm"
-                  value={newShift.start_datetime}
-                  onChange={(e) =>
-                    setNewShift((prev) => ({
-                      ...prev,
-                      start_datetime: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="col-md-5">
-                <label className="form-label form-label-sm">End</label>
-                <input
-                  type="datetime-local"
-                  className="form-control form-control-sm"
-                  value={newShift.end_datetime}
-                  onChange={(e) =>
-                    setNewShift((prev) => ({
-                      ...prev,
-                      end_datetime: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="col-md-2">
-                <label className="form-label form-label-sm">Capacity</label>
-                <input
-                  type="number"
-                  className="form-control form-control-sm"
-                  min="0"
-                  placeholder="∞"
-                  value={newShift.capacity}
-                  onChange={(e) =>
-                    setNewShift((prev) => ({
-                      ...prev,
-                      capacity: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-            </div>
-            <div className="d-flex gap-2">
-              <button
-                type="button"
-                className="btn btn-sm btn-success"
-                disabled={addingShift}
-                onClick={handleAddShift}
-              >
-                {addingShift ? "Adding…" : "Add Shift"}
-              </button>
-              <button
-                type="button"
-                className="btn btn-sm btn-secondary"
-                onClick={() => {
-                  setShowAddShift(false);
-                  setNewShift({
-                    start_datetime: "",
-                    end_datetime: "",
-                    capacity: "",
-                  });
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      {loadingShifts ? (
+        <p className="text-muted">Loading shifts…</p>
+      ) : (
+        <ShiftBuilder
+          startTime={
+            formData.start_datetime
+              ? formData.start_datetime.split("T")[1]?.slice(0, 5)
+              : ""
+          }
+          endTime={
+            formData.end_datetime
+              ? formData.end_datetime.split("T")[1]?.slice(0, 5)
+              : ""
+          }
+          shifts={shiftBuilderShifts}
+          onShiftsChange={setShiftBuilderShifts}
+          shiftVolunteers={shiftVolunteers}
+          shiftIds={originalShiftIds}
+        />
+      )}
       <hr />
 
       <button
@@ -1275,7 +1112,7 @@ function ProviderDetailsModal({ show, onHide, type, data, userId }) {
   const config = MODAL_TYPE[type];
 
   return (
-    <Modal show={show} onHide={onHide}>
+    <Modal show={show} onHide={onHide} size="lg">
       <Modal.Header closeButton>
         <Modal.Title>{config?.title || ""}</Modal.Title>
       </Modal.Header>
