@@ -2026,7 +2026,7 @@ module.exports = function (app, pool) {
   app.get("/api/resources/:resourceId/shifts", async (req, res) => {
     try {
       const resourceId = req.params.resourceId;
-      const { date } = req.query;
+      const { date, utc_start, utc_end } = req.query;
 
       let query = `
         SELECT
@@ -2042,7 +2042,12 @@ module.exports = function (app, pool) {
       `;
       const params = [resourceId];
 
-      if (date) {
+      if (utc_start && utc_end) {
+        // Preferred: filter by UTC range derived from the client's local day
+        query += " AND vs.start_datetime >= ? AND vs.start_datetime <= ?";
+        params.push(utc_start, utc_end);
+      } else if (date) {
+        // Legacy fallback
         query += " AND DATE(vs.start_datetime) = ?";
         params.push(date);
       }
@@ -2079,21 +2084,22 @@ module.exports = function (app, pool) {
   });
 
   // GET /api/resources/:resourceId/shift-dates
-  // Returns distinct dates that have shifts for this resource (for calendar highlighting)
+  // Returns distinct UTC start_datetimes for this resource's shifts.
+  // The frontend converts each to a local date for calendar highlighting.
   app.get("/api/resources/:resourceId/shift-dates", async (req, res) => {
     try {
       const resourceId = req.params.resourceId;
 
       const [rows] = await pool.promise().query(
-        `SELECT DISTINCT DATE(vs.start_datetime) AS shift_date
+        `SELECT vs.start_datetime
          FROM VolunteerShift vs
          JOIN VolunteerOpportunity vo ON vs.opportunity_id = vo.opportunity_id
          WHERE vo.resource_id = ?
-         ORDER BY shift_date ASC`,
+         ORDER BY vs.start_datetime ASC`,
         [resourceId],
       );
 
-      res.json(rows.map((r) => r.shift_date));
+      res.json(rows.map((r) => r.start_datetime));
     } catch (err) {
       console.error("Error fetching resource shift dates:", err);
       res.status(500).json({ error: "Failed to fetch shift dates" });
