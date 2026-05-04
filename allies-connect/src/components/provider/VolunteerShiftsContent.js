@@ -296,9 +296,17 @@ function VolunteerShiftsContent({ providerId }) {
       setShifts([]);
       return;
     }
+    // Convert the selected local day to a UTC range so the backend
+    // (which stores datetimes in UTC) returns the correct shifts even
+    // when the local day spans two UTC dates.
+    const pad = (n) => String(n).padStart(2, "0");
+    const fmtUTC = (d) =>
+      `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:00`;
+    const utcStart = fmtUTC(new Date(`${selectedDate}T00:00:00`));
+    const utcEnd = fmtUTC(new Date(`${selectedDate}T23:59:59`));
     setLoadingShifts(true);
     fetch(
-      `${API_URL}/api/resources/${selectedResourceId}/shifts?date=${selectedDate}`,
+      `${API_URL}/api/resources/${selectedResourceId}/shifts?utc_start=${encodeURIComponent(utcStart)}&utc_end=${encodeURIComponent(utcEnd)}`,
     )
       .then((r) => r.json())
       .then((data) => setShifts(Array.isArray(data) ? data : []))
@@ -408,9 +416,19 @@ function VolunteerShiftsContent({ providerId }) {
   const handleSaveNewShift = async () => {
     if (!newShift.start || !newShift.end) return;
     setSavingShift(true);
+
+    // Convert a "YYYY-MM-DD" date + "HH:mm" time (local) to a UTC MySQL
+    // datetime string so the backend (pool timezone "+00:00") stores it
+    // correctly and returns it with a Z suffix for local display.
+    const toUTCMysql = (date, time) => {
+      const d = new Date(`${date}T${time}:00`);
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:00`;
+    };
+
     try {
-      const startDT = `${selectedDate} ${newShift.start}:00`;
-      const endDT = `${selectedDate} ${newShift.end}:00`;
+      const startDT = toUTCMysql(selectedDate, newShift.start);
+      const endDT = toUTCMysql(selectedDate, newShift.end);
       const resp = await fetch(
         `${API_URL}/api/resources/${selectedResourceId}/shifts`,
         {
